@@ -37,7 +37,7 @@ const Our_Approach_Section = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
         viewport={{ once: true }}
-        className="text-5xl md:text-6xl font-serif font-bold mb-12 text-[#2d6e6e] drop-shadow-md tracking-wide relative"
+        className="text-3xl md:text-4xl font-serif font-bold mb-12 text-[#2d6e6e] drop-shadow-md tracking-wide relative"
       >
         Our Approach
         <span className="block w-20 h-[3px] bg-[#619696] mx-auto mt-4 rounded-full"></span>

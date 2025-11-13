@@ -15,54 +15,39 @@ const testimonials_data = [
 ];
 
 const Testimonials_Section = () => {
+  const [videoRatio, setVideoRatio] = useState("16/9");
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const videoRef = useRef(null);
   const sectionRef = useRef(null);
 
-  const next = () => setActiveIndex((prev) => (prev + 1) % testimonials_data.length);
-  const prev = () => setActiveIndex((prev) => (prev - 1 + testimonials_data.length) % testimonials_data.length);
+  const next = () =>
+    setActiveIndex((prev) => (prev + 1) % testimonials_data.length);
 
-  // 🔁 Reset and play the new video when index changes
+  const prev = () =>
+    setActiveIndex((prev) => (prev - 1 + testimonials_data.length) % testimonials_data.length);
+
+  // Reset + play
   useEffect(() => {
     const video = videoRef.current;
-    if (video) {
-      video.currentTime = 0;
-      video.muted = isMuted;
-      video.play().catch(() => { });
-    }
+    if (!video) return;
+    video.currentTime = 0;
+    video.muted = isMuted;
+    video.play().catch(() => { });
   }, [activeIndex, isMuted]);
 
-  // 🎧 Toggle Mute/Unmute
-  const toggleMute = async () => {
+  // Mute toggle
+  const toggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
-
     const newMuted = !isMuted;
     setIsMuted(newMuted);
     video.muted = newMuted;
-
-    try {
-      if (!newMuted) {
-        video.volume = 1.0;
-        await video.play();
-      } else {
-        video.pause();
-        await video.play(); // Keeps state synced
-      }
-    } catch (err) {
-      console.warn("Toggle play blocked:", err);
-    }
+    video.play().catch(() => { });
   };
 
-  // 🖱️ Tap anywhere to toggle sound
-  const handleSectionClick = (e) => {
-    const isControl = e.target.closest("button") || e.target.closest(".dot-control");
-    if (!isControl) toggleMute();
-  };
-
-  // ⏸️ Pause/Play based on scroll visibility
+  // Autoplay on scroll visibility
   useEffect(() => {
     const section = sectionRef.current;
     const video = videoRef.current;
@@ -70,131 +55,126 @@ const Testimonials_Section = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-
-            video.play().catch(() => { });
-
-          } else {
-            // ⏸️ Pause when out of view
-            video.pause();
-          }
-        });
+        entries.forEach((entry) =>
+          entry.isIntersecting ? video.play().catch(() => { }) : video.pause()
+        );
       },
-      { threshold: 0.5 } // at least 50% visible to play
+      { threshold: 0.5 }
     );
 
     observer.observe(section);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
   return (
     <section
       ref={sectionRef}
-      onClick={handleSectionClick}
-      className="relative bg-gradient-to-b from-[#f8fbfb] to-[#e8f4f4] py-16 flex flex-col items-center overflow-hidden"
+      className="relative py-20 bg-gradient-to-b from-[#f8fbfb] to-[#e8f4f4] flex flex-col items-center overflow-hidden"
     >
       {/* Heading */}
       <motion.h2
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="text-4xl md:text-5xl font-bold text-[#0b3d3d] mb-8 text-center"
+        className="text-3xl md:text-5xl font-bold text-[#0b3d3d] mb-10 text-center"
       >
         What Our <span className="text-[#619696]">Clients Say</span>
       </motion.h2>
 
-      {/* Video */}
-      <div className="relative w-full max-w-5xl px-4 md:px-0">
+      {/* Video wrapper */}
+      <div className="relative w-100 ">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeIndex}
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-[#dff3f3]"
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.8 }}
+            className="
+              relative  rounded-3xl overflow-hidden shadow-2xl
+              border border-white 
+              backdrop-blur-xl
+              h-[65vh] md:h-[75vh]
+            "
           >
+            {/* Video (OBJECT-CONTAIN) */}
             <video
               ref={videoRef}
-              key={testimonials_data[activeIndex].video}
               src={testimonials_data[activeIndex].video}
               autoPlay
               loop
               muted={isMuted}
               playsInline
-              className="w-full h-[60vh] sm:h-[70vh] md:h-[75vh] object-contain bg-black cursor-pointer"
+              className="
+                absolute inset-0 w-full h-full
+                object-contain
+              "
             />
 
-            {/* Mute/Unmute Button */}
+            {/* Mute Button */}
             <motion.button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleMute();
               }}
               whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.3 }}
-              className="absolute bottom-4 right-4 bg-white/80 hover:bg-white text-[#0b3d3d] rounded-full p-3 shadow-md backdrop-blur-sm"
+              className="
+                absolute bottom-5 right-5 z-20
+                bg-white/80 hover:bg-white text-[#0b3d3d]
+                rounded-full p-3 shadow-lg backdrop-blur-md
+              "
             >
               {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
             </motion.button>
-
-            {/* Tap Prompt */}
-            {isMuted && !hasUserInteracted && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                className="absolute bottom-16 right-4 bg-[#619696]/90 text-white text-sm px-4 py-2 rounded-full shadow-lg animate-pulse pointer-events-none"
-              >
-                🔊 Tap screen to Unmute
-              </motion.div>
-            )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation Arrows */}
-        <div className="absolute inset-0 flex justify-between items-center px-3 md:px-6 pointer-events-none">
+        {/* Navigation arrows */}
+        <div className="absolute inset-0 flex justify-between items-center px-4 pointer-events-none">
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.15 }}
             onClick={prev}
-            className="p-3 md:p-4 rounded-full bg-white/80 hover:bg-white shadow-md backdrop-blur-sm pointer-events-auto"
+            className="
+              pointer-events-auto bg-white/70 hover:bg-white
+              shadow-lg p-3 md:p-4 rounded-full backdrop-blur-md
+            "
           >
-            <ChevronLeft className="text-[#0b3d3d]" size={22} />
+            <ChevronLeft className="text-[#0b3d3d]" size={24} />
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.15 }}
             onClick={next}
-            className="p-3 md:p-4 rounded-full bg-white/80 hover:bg-white shadow-md backdrop-blur-sm pointer-events-auto"
+            className="
+              pointer-events-auto bg-white/70 hover:bg-white
+              shadow-lg p-3 md:p-4 rounded-full backdrop-blur-md
+            "
           >
-            <ChevronRight className="text-[#0b3d3d]" size={22} />
+            <ChevronRight className="text-[#0b3d3d]" size={24} />
           </motion.button>
         </div>
       </div>
 
-      {/* Dots */}
-      <div className="flex justify-center gap-2 mt-6">
+      {/* Dot Indicators */}
+      <div className="flex gap-2 mt-8">
         {testimonials_data.map((_, i) => (
           <motion.div
             key={i}
             onClick={() => setActiveIndex(i)}
-            whileHover={{ scale: 1.2 }}
-            className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-300 dot-control ${i === activeIndex ? "bg-[#619696]" : "bg-gray-300"
-              }`}
+            whileHover={{ scale: 1.25 }}
+            className={`
+              w-3.5 h-3.5 rounded-full cursor-pointer transition-all duration-300
+              ${i === activeIndex ? "bg-[#619696]" : "bg-gray-300"}
+            `}
           />
         ))}
       </div>
 
-      {/* Glow */}
-      <div className="absolute -bottom-20 w-[500px] h-[500px] bg-[#619696]/20 rounded-full blur-3xl animate-pulse" />
+      {/* Glow Blob */}
+      <div className="absolute -bottom-32 w-[550px] h-[550px] bg-[#619696]/20 rounded-full blur-3xl" />
     </section>
   );
 };
 
 export default Testimonials_Section;
-

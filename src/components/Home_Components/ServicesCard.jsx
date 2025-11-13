@@ -1,111 +1,112 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import hair_1 from '../../assets/hair_1.jpeg';
-import skin_1 from '../../assets/skin_1.jpg';
-import eye_3 from '../../assets/eye_3.jpg';
-import semipermanent_Makeup1 from '../../assets/semipermanent_Makeup1.jpg';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import skin_1 from "../../assets/skin_1.jpg";
+import hair_1 from "../../assets/hair_1.jpeg";
+import eye_3 from "../../assets/eye_3.jpg";
+import semipermanent_Makeup1 from "../../assets/semipermanent_Makeup1.jpg";
+
+const cardVariants = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0 },
+  hover: {
+    scale: 1.03,
+    boxShadow: "0 15px 40px rgba(97,150,150,0.25)",
+  },
+};
+
+const ServiceCard = ({ img, title, desc, link, delay }) => (
+  <motion.div
+    variants={cardVariants}
+    initial="initial"
+    animate="animate"
+    whileHover="hover"
+    transition={{ duration: 0.5, delay }}
+    className="
+      relative w-72 rounded-2xl overflow-hidden bg-white shadow-lg
+      border border-transparent
+      bg-gradient-to-b from-white to-[#f8ffff]
+      hover:border-[#82caca] transition-all duration-300
+    "
+  >
+    {/* Image */}
+    <div className="relative h-52 overflow-hidden">
+      <motion.img
+        src={img}
+        alt={title}
+        className="w-full h-full object-cover"
+        whileHover={{ scale: 1.1 }}
+        transition={{ duration: 0.6 }}
+      />
+      {/* Dark Overlay on Hover */}
+      <motion.div
+        className="absolute inset-0 bg-black/20"
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 0.2 }}
+        transition={{ duration: 0.4 }}
+      />
+    </div>
+
+    {/* Content */}
+    <div className="p-6 text-center">
+      <h2 className="text-2xl font-semibold text-gray-800 tracking-wide">
+        {title}
+      </h2>
+      <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+        {desc}
+      </p>
+
+      <Link
+        to={link}
+        className="
+          mt-5 inline-block px-5 py-2 rounded-xl text-sm font-medium
+          bg-[#b3e0e0] text-gray-900 border border-[#619696]
+          hover:bg-[#96d6d6] transition-all duration-300 shadow
+        "
+      >
+        Learn More
+      </Link>
+    </div>
+
+    {/* Bottom Accent Line */}
+    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#619696] to-[#96e5e5]" />
+  </motion.div>
+);
 
 const ServicesCard = () => {
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        whileHover={{ scale: 1.05 }}
-        className="bg-white shadow-lg rounded-xl w-100 md:w-64 border border-[#619696] overflow-hidden"
-      >
-        <img
-          src={skin_1}
-          alt="Skin Care"
-          className="w-full h-90 object-cover"
-        />
-        <hr className="border-t border-[#619696]" />
-        <div className="p-4 text-center">
-          <h2 className="text-xl font-semibold mb-2">Skin Care</h2>
-          <p className="text-sm text-gray-600 mb-3">
-            Acne scar removal, carbon peels, pigmentation treatments, skin
-            whitening...
-          </p>
-          <Link to={"/skincare"} className="mt-3 px-4 py-2 text-black text-sm rounded-lg bg-primary hover:bg-[#adcaca] transition duration-300 border cursor-pointer">
-            Learn More
-          </Link>
-        </div>
-      </motion.div>
+      <ServiceCard
+        img={skin_1}
+        title="Skin Care"
+        desc="Acne scar removal, pigmentation correction, brightening peels, and advanced rejuvenation treatments."
+        link="/skincare"
+        delay={0}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-        whileHover={{ scale: 1.05 }}
-        className="bg-white shadow-lg rounded-xl  w-100 md:w-64 border border-[#619696] overflow-hidden"
-      >
-        <img src={hair_1} alt="" className="w-full h-90 object-cover" />
-        <hr className="border-t border-[#619696]" />
-        <div className="p-4 text-center">
-          <h2 className="text-xl font-semibold mb-2">Hair Care</h2>
-          <p className="text-sm text-gray-600 mb-3">
-            Hair loss, laser hair reduction, mesotherapy, scalp
-            micropigmentation...
-          </p>
-          <Link to={"/haircare"} className="mt-3 px-4 py-2 text-black text-sm rounded-lg bg-primary hover:bg-[#adcaca] transition duration-300 border">
-            Learn More
-          </Link>
-        </div>
-      </motion.div>
+      <ServiceCard
+        img={hair_1}
+        title="Hair Care"
+        desc="PRP, GFC, mesotherapy, scalp strengthening, hair fall control, and laser hair rejuvenation."
+        link="/haircare"
+        delay={0.2}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.4 }}
-        whileHover={{ scale: 1.05 }}
-        className="bg-white shadow-lg rounded-xl w-100 md:w-64 border border-[#619696] overflow-hidden"
-      >
-        <img
-          src={eye_3}
-          alt="eye Care"
-          className="w-screen h-89 object-cover"
-        />
-        <hr className="border-t border-[#619696]" />
-        <div className="p-4 text-center">
-          <h2 className="text-xl font-semibold mb-2">Eye Care</h2>
-          <p className="text-sm text-gray-600 mb-3">
-            Eyelash lifts, eyebrow lamination, dry eye therapy, vision
-            correction and many more
-          </p>
-          <Link to={"/eyecare"} className="mt-3 px-4 py-2 text-black text-sm rounded-lg bg-primary hover:bg-[#adcaca] transition duration-300 border">
-            Learn More
-          </Link>
-        </div>
-      </motion.div>
+      <ServiceCard
+        img={eye_3}
+        title="Eye Care"
+        desc="Eyelash lifts, eyebrow lamination, dry eye relief, and non-surgical eye aesthetics."
+        link="/eyecare"
+        delay={0.4}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.6 }}
-        whileHover={{ scale: 1.05 }}
-        className="bg-white shadow-lg rounded-xl  w-100 md:w-64 border border-[#619696] overflow-hidden"
-      >
-        <img
-          src={semipermanent_Makeup1}
-          alt="Skin Care"
-          className="w-full h-90 object-cover"
-        />
-        <hr className="border-t border-[#619696]" />
-        <div className="p-4 text-center">
-          <h2 className="text-xl font-semibold mb-">
-            Semipermanent Makeup
-          </h2>
-          <p className="text-sm text-gray-600 mb-3">
-            BB glow, beauty spot, lip blush, lip micropigmentation, scalp
-            micro...
-          </p>
-          <Link to={"/makeup"} className="mt-3 px-4 py-2 text-black text-sm rounded-lg bg-primary hover:bg-[#adcaca] transition duration-300 border">
-            Learn More
-          </Link>
-        </div>
-      </motion.div>
+      <ServiceCard
+        img={semipermanent_Makeup1}
+        title="Semi-Permanent Makeup"
+        desc="Lip blush, BB glow, scalp micro, beauty spot, and advanced micropigmentation techniques."
+        link="/makeup"
+        delay={0.6}
+      />
     </>
   );
 };

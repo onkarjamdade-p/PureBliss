@@ -68,33 +68,19 @@ const Main_Section = () => {
           animate={{ opacity: isFading ? 0 : 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
-          className={`absolute inset-0 w-full h-full z-[1] ${isMobile ? "object-contain" : "object-cover"
-            }`}
+          className="absolute inset-0 w-full h-full z-[1] object-cover"
         >
           <source src={currentVideo} type="video/mp4" />
         </motion.video>
       </AnimatePresence>
 
-      {/* 🌫️ Soft Blur for Mobile */}
-      {isMobile && (
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <video
-            src={currentVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover blur-xl scale-110 opacity-60"
-          />
-        </div>
-      )}
 
       {/* 🌓 Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50 z-[2]" />
 
       {/* 🌟 Content (Only for second video) */}
       {currentVideo === Pure_Bliss_2 && (
-        <div className="relative z-10 flex flex-col justify-center items-center px-4 sm:px-8 md:px-12 max-w-[90%] sm:max-w-2xl lg:max-w-3xl text-white">
+        <div className="relative z-10 flex flex-col justify-center items-center px-4 sm:px-8 md:px-12 max-w-[90%] min-w-xl lg:max-w-3xl text-white">
           <motion.h1
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
