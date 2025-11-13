@@ -92,11 +92,11 @@ const Testimonials_Section = () => {
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.8 }}
             className="
-              relative  rounded-3xl overflow-hidden shadow-2xl
-              border border-white 
-              backdrop-blur-xl
-              h-[65vh] md:h-[75vh]
-            "
+  relative rounded-3xl overflow-hidden shadow-2xl
+  border border-white backdrop-blur-xl
+  h-[65vh] md:h-[75vh]
+  z-10
+"
           >
             {/* Video (OBJECT-CONTAIN) */}
             <video
@@ -106,10 +106,7 @@ const Testimonials_Section = () => {
               loop
               muted={isMuted}
               playsInline
-              className="
-                absolute inset-0 w-full h-full
-                object-contain
-              "
+              className="absolute inset-0 w-full h-full object-contain z-[1]"
             />
 
             {/* Mute Button */}
@@ -120,10 +117,11 @@ const Testimonials_Section = () => {
               }}
               whileHover={{ scale: 1.1 }}
               className="
-                absolute bottom-5 right-5 z-20
-                bg-white/80 hover:bg-white text-[#0b3d3d]
-                rounded-full p-3 shadow-lg backdrop-blur-md
-              "
+  absolute bottom-5 right-5 
+  z-[9999]
+  bg-white/80 hover:bg-white text-[#0b3d3d]
+  rounded-full p-3 shadow-lg backdrop-blur-md cursor-pointer
+"
             >
               {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
             </motion.button>
@@ -131,7 +129,7 @@ const Testimonials_Section = () => {
         </AnimatePresence>
 
         {/* Navigation arrows */}
-        <div className="absolute inset-0 flex justify-between items-center px-4 pointer-events-none">
+        <div className="absolute inset-0 flex justify-between items-center px-4 z-[999] pointer-events-none">
           <motion.button
             whileHover={{ scale: 1.15 }}
             onClick={prev}
