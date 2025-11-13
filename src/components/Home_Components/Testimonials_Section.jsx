@@ -6,14 +6,12 @@ import Testimonials_1 from "../../assets/video/Testimonials_1.mp4";
 import Testimonials_2 from "../../assets/video/Testimonials_2.mp4";
 import Testimonials_3 from "../../assets/video/Testimonials_3.mp4";
 import Testimonials_4 from "../../assets/video/Testimonials_4.mp4";
-import Video_1 from "../../assets/video/Video_1.mp4";
 
 const testimonials_data = [
   { id: 1, video: Testimonials_1 },
   { id: 2, video: Testimonials_2 },
   { id: 3, video: Testimonials_3 },
   { id: 4, video: Testimonials_4 },
-  { id: 5, video: Video_1 },
 ];
 
 const Testimonials_Section = () => {
