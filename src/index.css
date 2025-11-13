@@ -1,0 +1,67 @@
+/* ======= FONT IMPORTS ======= */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+
+/* ======= TAILWIND ======= */
+@import "tailwindcss";
+
+/* ======= THEME VARIABLES ======= */
+@theme {
+    --font-lato: "Lato", sans-serif;
+    --font-inter: "Inter", sans-serif;
+    --color-primary: #619696;
+    --color-primary-light: #A1C9C9;
+    --color-primary-extraLight: #A1C9C933;
+    --color-primary-20: #A1C9C933;
+    --color-grey: #555555;
+    --color-grey-light: #E5E5E5;
+    --color-red: #AB060699;
+}
+
+/* ======= BASE STYLES ======= */
+body {
+    font-family: "Lato", sans-serif;
+    background-color: #f7fbfb;
+}
+
+h2 {
+    font-family: "Playfair Display SC", serif;
+}
+
+.lato-regular {
+    font-family: "Lato", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* ======= HEARTBEAT GLOW EFFECT ======= */
+.glow-border {
+    position: relative;
+    border-radius: 1rem;
+    animation: heartbeatGlow 5s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(97, 180, 180, 0.6);
+}
+
+/* ======= GLOW ANIMATION ======= */
+@keyframes heartbeatGlow {
+    0% {
+        box-shadow: 0 0 0px rgba(97, 180, 180, 0);
+    }
+
+    25% {
+        box-shadow: 0 0 25px rgba(97, 180, 180, 0.9);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(97, 180, 180, 0.5);
+    }
+
+    75% {
+        box-shadow: 0 0 25px rgba(97, 180, 180, 1);
+    }
+
+    100% {
+        box-shadow: 0 0 0px rgba(97, 180, 180, 0);
+    }
+}
