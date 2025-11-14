@@ -119,7 +119,7 @@ const Navbar = () => {
           onClick={handleBookNow}
           className="hidden md:block bg-[#619696] hover:bg-[#4d7777] text-white font-semibold py-2 px-6 rounded-full shadow-md transform transition duration-300 hover:scale-110 hover:shadow-lg"
         >
-          Book Now
+          Book Appoinment
         </button>
 
         {/* Mobile Toggle */}
