@@ -320,7 +320,7 @@ Pure Bliss Skin & Eye Clinic`;
                             animate={{ opacity: 1, scale: 1 }}
                             className="mb-2"
                         >
-                            <Calendar size={38} />
+
                         </motion.div>
 
                         <motion.h1
