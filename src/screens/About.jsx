@@ -4,7 +4,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import founder from "../assets/founder.jpg";
-import logoFull from "../assets/logo_full.png";
+import logoFull from "../assets/NewLogo3.png";
 import skinCareImg from "../assets/skin_1.jpg";
 import hairCareImg from "../assets/hair_1.jpg";
 import eyeCareImg from "../assets/eye_3.jpg";
@@ -32,53 +32,32 @@ const About = () => {
 
   return (
     <section className="font-sans text-gray-800 bg-white">
-      {/* 🌸 Hero Section with Floating Logo */}
-      <div className="relative h-[86vh] flex flex-col justify-center items-center text-center bg-gradient-to-b from-[#e3f6f6] via-[#d5eeee] to-white overflow-hidden">
-        {/* Soft Floating Logo Background */}
-        {/* <motion.div
-          className="absolute inset-0 flex justify-center items-center pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.05, 0.1, 0.05] }}
-          transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-        > */}
-        <img
-          src={logoFull}
-          alt="Pure Bliss Logo Background"
-          className="w-64 md:w-80 "
-        />
-        {/* </motion.div> */}
 
-        {/* ✨ Main Logo with Floating + Glow */}
-        {/* <motion.div
-          className="relative"
+      {/* 🌸 HERO SECTION WITH MERGED LOGO */}
+      <div className="relative h-[86vh] flex flex-col justify-center items-center text-center 
+      bg-gradient-to-b from-[#e3f6f6] via-[#d5eeee] to-white overflow-hidden">
+
+        {/* 🌟 Logo merged & floating */}
+        <motion.img
+          src={logoFull}
+          alt="Pure Bliss Clinic Logo"
+          className="w-44 sm:w-56 md:w-64 lg:w-72 object-contain select-none"
+          style={{
+            background: "transparent",
+            filter: "drop-shadow(0px 4px 14px rgba(97,150,150,0.32))",
+          }}
           animate={{
-            y: [0, -10, 0],
-            boxShadow: [
-              "0 0 10px rgba(97,150,150,0.25)",
-              "0 0 25px rgba(97,150,150,0.45)",
-              "0 0 10px rgba(97,150,150,0.25)",
-            ],
+            opacity: [0.85, 1, 0.85],
+            y: [0, -8, 0],
           }}
           transition={{
             repeat: Infinity,
             duration: 6,
             ease: "easeInOut",
           }}
-        >
-          <div className="relative rounded-full overflow-hidden">
-            <img
-              src={logoFull}
-              alt="Pure Bliss Clinic Logo"
-              className="w-44 sm:w-56 md:w-64 object-contain rounded-full"
-              style={{
-                filter: "drop-shadow(0 0 10px rgba(97,150,150,0.3))",
-                background: "transparent",
-              }}
-            />
-          </div>
-        </motion.div> */}
+        />
 
-        {/* Animated Taglines */}
+        {/* ✨ Animated Taglines */}
         <AnimatePresence mode="wait">
           <motion.h1
             key={currentTag}
@@ -86,7 +65,7 @@ const About = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.8 }}
-            className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-[#2b5a5a] px-4 mt-8"
+            className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-[#2b5a5a] px-4 mt-10"
           >
             {taglines[currentTag]}
           </motion.h1>
@@ -112,7 +91,7 @@ const About = () => {
         </motion.div>
       </div>
 
-      {/* 🩵 Our Focus Areas (Updated) */}
+      {/* 🩵 OUR FOCUS AREAS */}
       <div
         className="bg-[#f7fdfd] py-20 px-6 md:px-16 lg:px-24 text-center"
         data-aos="fade-up"
@@ -122,19 +101,19 @@ const About = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 place-items-center">
+
           {/* Skin Care */}
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="bg-white shadow-xl rounded-xl p-6 w-72 md:w-80 flex flex-col items-center transition-all duration-300 hover:shadow-2xl border border-[#c8e5e5]"
+            className="bg-white shadow-xl rounded-xl p-6 w-72 md:w-80 flex flex-col items-center 
+            transition-all duration-300 hover:shadow-2xl border border-[#c8e5e5]"
           >
             <img
               src={skinCareImg}
               alt="Skin Care"
               className="rounded-lg w-full h-48 object-cover mb-4"
             />
-            <h3 className="text-xl font-semibold text-[#2b5a5a] mb-2">
-              Skin Care
-            </h3>
+            <h3 className="text-xl font-semibold text-[#2b5a5a] mb-2">Skin Care</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
               Discover the glow within — from carbon peels to hydra facials,
               restoring youthful radiance and confidence.
@@ -144,16 +123,15 @@ const About = () => {
           {/* Hair Care */}
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="bg-white shadow-xl rounded-xl p-6 w-72 md:w-80 flex flex-col items-center transition-all duration-300 hover:shadow-2xl border border-[#c8e5e5]"
+            className="bg-white shadow-xl rounded-xl p-6 w-72 md:w-80 flex flex-col items-center 
+            transition-all duration-300 hover:shadow-2xl border border-[#c8e5e5]"
           >
             <img
               src={hairCareImg}
               alt="Hair Care"
               className="rounded-lg w-full h-48 object-cover mb-4"
             />
-            <h3 className="text-xl font-semibold text-[#2b5a5a] mb-2">
-              Hair Care
-            </h3>
+            <h3 className="text-xl font-semibold text-[#2b5a5a] mb-2">Hair Care</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
               Revive your roots with PRP, GFC, and scalp therapies — experience
               healthy, voluminous hair again.
@@ -163,30 +141,31 @@ const About = () => {
           {/* Eye Care */}
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="bg-white shadow-xl rounded-xl p-6 w-72 md:w-80 flex flex-col items-center transition-all duration-300 hover:shadow-2xl border border-[#c8e5e5]"
+            className="bg-white shadow-xl rounded-xl p-6 w-72 md:w-80 flex flex-col items-center 
+            transition-all duration-300 hover:shadow-2xl border border-[#c8e5e5]"
           >
             <img
               src={eyeCareImg}
               alt="Eye Care"
               className="rounded-lg w-full h-48 object-cover mb-4"
             />
-            <h3 className="text-xl font-semibold text-[#2b5a5a] mb-2">
-              Eye Care
-            </h3>
+            <h3 className="text-xl font-semibold text-[#2b5a5a] mb-2">Eye Care</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
               From dry eye therapy to eyelash lifts — gentle, precise treatments
               for a brighter outlook.
             </p>
           </motion.div>
+
         </div>
       </div>
 
-      {/* 🌿 Vision + Mission */}
+      {/* 🌿 VISION + MISSION */}
       <div
         className="bg-gradient-to-b from-[#e4f5f5] to-[#d0ecec] py-16 px-6 md:px-16 text-center md:text-left"
         data-aos="fade-up"
       >
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
+
           <div data-aos="fade-right">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#2b5a5a] mb-4">
               Our Vision
@@ -197,6 +176,7 @@ const About = () => {
               and wellness.
             </p>
           </div>
+
           <div data-aos="fade-left">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#2b5a5a] mb-4">
               Our Mission
@@ -207,41 +187,44 @@ const About = () => {
               and deeply fulfilling.
             </p>
           </div>
+
         </div>
       </div>
 
-      {/* 🧑‍⚕️ Founder Section */}
+      {/* 🧑‍⚕️ FOUNDER SECTION */}
       <div
         className="md:grid md:grid-cols-2 place-items-center bg-[#f7fdfd] py-16 px-6 md:px-20"
         data-aos="zoom-in"
       >
+        {/* Founder Image */}
         <div className="order-2 md:order-1 flex justify-center">
           <motion.img
             src={founder}
             alt="Founder"
-            className="rounded-full shadow-2xl w-72 h-72 md:w-96 md:h-96 object-cover border-4 border-[#cfe5e5]"
+            className="rounded-full shadow-2xl w-72 h-72 md:w-96 md:h-96 object-cover 
+            border-4 border-[#cfe5e5]"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1 }}
           />
         </div>
 
+        {/* Founder Info */}
         <div className="order-1 md:order-2 max-w-lg space-y-4 text-center md:text-left">
           <h2 className="text-3xl font-serif font-bold text-[#2b5a5a]">Founder</h2>
-          <h3 className="text-lg font-semibold text-[#619696]">
-            Shivani Sawant
-          </h3>
-          <p className="text-gray-600 text-base leading-relaxed">
-            <strong>(B.Optom | pgdcc | pmu )</strong>
-            <br />
-            <strong>Clinical Optometrist | cosmetologist & tricologist</strong>
+          <h3 className="text-lg font-semibold text-[#619696]">Shivani Sawant</h3>
 
+          <p className="text-gray-600 text-base leading-relaxed">
+            <strong>(B.Optom | pgdcc | pmu)</strong>
             <br />
-            A visionary leader in the fields of aesthetics and wellness,
-            Shivani Sawant blends medical precision with compassionate care.
+            <strong>Clinical Optometrist | Cosmetologist & Trichologist</strong>
+            <br />
+            A visionary leader in aesthetics and wellness, Shivani Sawant blends
+            medical precision with compassionate care.
           </p>
         </div>
       </div>
+
     </section>
   );
 };

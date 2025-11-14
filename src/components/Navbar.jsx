@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import logoFull from "../assets/logo_full.png";
+import logoFull from "../assets/NewLogo3.png";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,7 +57,7 @@ const Navbar = () => {
           <img
             src={logoFull}
             alt="Pure Bliss Logo"
-            className="h-10 w-auto hover:scale-105 transition-transform duration-300"
+            className="h-14 w-auto hover:scale-105 transition-transform duration-300"
           />
         </Link>
 
