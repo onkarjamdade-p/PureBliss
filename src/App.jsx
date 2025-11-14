@@ -8,12 +8,14 @@ import HairCare from './screens/HairCare'
 import EyeCare from './screens/EyeCare'
 import SemiPermanentMakeup from './screens/SemiPermanentMakeup'
 
+
 import ScrollToTop from './utils/ScrollToTop'
 
 import Contact from './screens/Contact'
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { Link } from 'react-router-dom';
+import Appointment from './screens/Appointment';
 
 const App = () => {
 
@@ -29,6 +31,8 @@ const App = () => {
           <Route path="/haircare" element={<HairCare />} />
           <Route path="/eyecare" element={<EyeCare />} />
           <Route path="/makeup" element={<SemiPermanentMakeup />} />
+          <Route path="/Appointment" element={<Appointment />} />
+
 
 
 

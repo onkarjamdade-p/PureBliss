@@ -36,6 +36,13 @@ const Navbar = () => {
     setMenuOpen(false);
   };
 
+  // Handle booking navigation
+  const handleBookNow = () => {
+    navigate("/appointment");
+    setMenuOpen(false);
+    setServicesOpen(false);
+  };
+
   return (
     <nav className="fixed top-0 w-full z-50 bg-white shadow-md border-b border-gray-200 px-6 py-3 transition-all duration-300">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -54,31 +61,22 @@ const Navbar = () => {
           />
         </Link>
 
-        {/* ✨ Desktop Navbar (With Animation) */}
+        {/* ✨ Desktop Navbar */}
         <ul className="hidden md:flex space-x-10 text-[17px] font-medium text-gray-700 items-center">
-          {/* Home */}
           <li className="relative group">
-            <Link
-              to="/"
-              className="transition-colors duration-300 hover:text-[#619696]"
-            >
+            <Link to="/" className="transition-colors duration-300 hover:text-[#619696]">
               Home
               <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#619696] group-hover:w-full transition-all duration-300 ease-in-out"></span>
             </Link>
           </li>
 
-          {/* About */}
           <li className="relative group">
-            <Link
-              to="/about"
-              className="transition-colors duration-300 hover:text-[#619696]"
-            >
+            <Link to="/about" className="transition-colors duration-300 hover:text-[#619696]">
               About
               <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#619696] group-hover:w-full transition-all duration-300 ease-in-out"></span>
             </Link>
           </li>
 
-          {/* Services Dropdown */}
           <li className="relative group" ref={dropdownRef}>
             <button
               onClick={() => setServicesOpen(!servicesOpen)}
@@ -108,24 +106,23 @@ const Navbar = () => {
             )}
           </li>
 
-          {/* Contact */}
           <li className="relative group">
-            <Link
-              to="/contact"
-              className="transition-colors duration-300 hover:text-[#619696]"
-            >
+            <Link to="/contact" className="transition-colors duration-300 hover:text-[#619696]">
               Contact
               <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#619696] group-hover:w-full transition-all duration-300 ease-in-out"></span>
             </Link>
           </li>
         </ul>
 
-        {/* ✨ Desktop Button */}
-        <button className="hidden md:block bg-[#619696] hover:bg-[#4d7777] text-white font-semibold py-2 px-6 rounded-full shadow-md transform transition duration-300 hover:scale-110 hover:shadow-lg">
+        {/* ✨ Desktop “Book Now” Button */}
+        <button
+          onClick={handleBookNow}
+          className="hidden md:block bg-[#619696] hover:bg-[#4d7777] text-white font-semibold py-2 px-6 rounded-full shadow-md transform transition duration-300 hover:scale-110 hover:shadow-lg"
+        >
           Book Now
         </button>
 
-        {/* Mobile Toggle (Unchanged) */}
+        {/* Mobile Toggle */}
         <button
           className="md:hidden text-gray-800 w-6 h-6 focus:outline-none"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -134,7 +131,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* ✅ Overlay (click outside to close) */}
+      {/* Overlay */}
       {menuOpen && (
         <div
           onClick={() => setMenuOpen(false)}
@@ -142,12 +139,11 @@ const Navbar = () => {
         ></div>
       )}
 
-      {/* ✅ MOBILE MENU (Unchanged) */}
+      {/* Mobile Menu */}
       <div
         className={`md:hidden fixed top-0 right-0 h-full w-[80%] sm:w-[70%] bg-white shadow-2xl border-l border-gray-200 transform transition-transform duration-500 z-50 ${menuOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
-        {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
           <img src={logoFull} alt="Logo" className="h-9" />
           <FaTimes
@@ -156,31 +152,15 @@ const Navbar = () => {
           />
         </div>
 
-        {/* Menu Links */}
         <div className="flex flex-col px-6 py-8 space-y-6 text-[18px] font-medium text-gray-700">
-          <Link
-            to="/"
-            className="hover:text-[#619696]"
-            onClick={() => {
-              setMenuOpen(false);
-              setServicesOpen(false);
-            }}
-          >
+          <Link to="/" className="hover:text-[#619696]" onClick={() => setMenuOpen(false)}>
             Home
           </Link>
 
-          <Link
-            to="/about"
-            className="hover:text-[#619696]"
-            onClick={() => {
-              setMenuOpen(false);
-              setServicesOpen(false);
-            }}
-          >
+          <Link to="/about" className="hover:text-[#619696]" onClick={() => setMenuOpen(false)}>
             About
           </Link>
 
-          {/* ✅ Mobile Dropdown (Unchanged) */}
           <div className="relative">
             <button
               onClick={() => setServicesOpen(!servicesOpen)}
@@ -210,26 +190,23 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link
-            to="/contact"
-            className="hover:text-[#619696]"
-            onClick={() => {
-              setMenuOpen(false);
-              setServicesOpen(false);
-            }}
-          >
+          <Link to="/contact" className="hover:text-[#619696]" onClick={() => setMenuOpen(false)}>
             Contact
           </Link>
 
           <div className="border-t border-gray-200 my-3"></div>
 
-          <button className="w-full bg-[#619696] hover:bg-[#4d7777] text-white font-semibold py-3 rounded-full shadow-md transform transition duration-300 hover:scale-105">
-            Book Now
+          {/* ✅ Mobile “Book Now” Button */}
+          <button
+            onClick={handleBookNow}
+            className="w-full bg-[#619696] hover:bg-[#4d7777] text-white font-semibold py-3 rounded-full shadow-md transform transition duration-300 hover:scale-105"
+          >
+            Book Appoinment
           </button>
         </div>
       </div>
 
-      {/* ✅ Animations */}
+      {/* Animations */}
       <style>{`
         @keyframes fadeDown {
           from { opacity: 0; transform: translateY(-8px); }
