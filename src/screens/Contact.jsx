@@ -255,10 +255,10 @@ Looking forward to your response.%0AThank you!`;
                                                 className="absolute w-full mt-2 bg-white rounded-xl border shadow-lg max-h-60 overflow-y-auto z-30"
                                             >
                                                 {[
-                                                    { group: "🌿 Skin Care", items: ["Chemical Peel", "Carbon Peel (Hollywood Peel)", "Laser Hair Reduction (LHR)", "MNRF Treatment", "HIFU Face Lift"] },
-                                                    { group: "💇 Hair Care", items: ["PRP Therapy", "GFC Therapy", "Mesotherapy", "LLLT Laser Treatment", "Anti-Dandruff Treatment"] },
-                                                    { group: "👁️ Eye Care", items: ["Dry Eye Therapy", "Vision Correction", "Eyelash Lift & Tint", "Eyelid Rejuvenation"] },
-                                                    { group: "💄 Semi-Permanent Makeup", items: ["Lip Blush", "Microblading", "BB Glow", "Ombre Brows"] },
+                                                    { group: " Skin Care", items: ["Chemical Peel", "Carbon Peel (Hollywood Peel)", "Laser Hair Reduction (LHR)", "MNRF Treatment", "HIFU Face Lift"] },
+                                                    { group: " Hair Care", items: ["PRP Therapy", "GFC Therapy", "Mesotherapy", "LLLT Laser Treatment", "Anti-Dandruff Treatment"] },
+                                                    { group: " Eye Care", items: ["Dry Eye Therapy", "Vision Correction", "Eyelash Lift & Tint", "Eyelid Rejuvenation"] },
+                                                    { group: " Semi-Permanent Makeup", items: ["Lip Blush", "Microblading", "BB Glow", "Ombre Brows"] },
                                                 ].map((cat, i) => (
                                                     <div key={i} className="border-b last:border-none">
                                                         <h4 className="px-4 py-2 text-sm font-semibold text-[#619696] bg-[#f9fdfd] sticky top-0">

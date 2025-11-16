@@ -219,8 +219,11 @@ const About = () => {
             <br />
             <strong>Clinical Optometrist | Cosmetologist & Trichologist</strong>
             <br />
-            A visionary leader in aesthetics and wellness, Shivani Sawant blends
-            medical precision with compassionate care.
+            Shivani Sawant created Pure Bliss Clinic to offer reliable and comfortable skin, hair, and eye care.
+            She believes in understanding every patient’s unique concerns.
+            Her treatments focus on natural, effective, and long-lasting results.
+            With her experience and warm approach, she makes every visit reassuring.
+            Her goal is simple — to help you look and feel your best.
           </p>
         </div>
       </div>
