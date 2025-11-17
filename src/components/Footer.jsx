@@ -94,7 +94,7 @@ const Footer = () => {
                 <FaInstagram className="mr-2 text-xl" /> Instagram
               </a>
               <a
-                href="https://www.facebook.com"
+                href="https://www.facebook.com/share/1BNz4egJ37/"
                 className="flex items-center hover:text-[#b9eaec] transition-all duration-200 hover:translate-x-1"
                 target="_blank"
                 rel="noopener noreferrer"

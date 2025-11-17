@@ -370,7 +370,7 @@ Looking forward to your response.%0AThank you!`;
             <div className="flex justify-center items-center gap-8 sm:gap-10 py-8 sm:py-12">
                 {[
                     { icon: <FaInstagram />, link: "https://www.instagram.com/pureblissskinandeyeclinic" },
-                    { icon: <FaFacebook />, link: "https://www.facebook.com/" },
+                    { icon: <FaFacebook />, link: "https://www.facebook.com/share/1BNz4egJ37/" },
                     {
                         icon: <FaWhatsapp />,
                         link: "https://wa.me/919922442405?text=Hello,%20I'm%20interested%20in%20your%20services!",
