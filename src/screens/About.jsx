@@ -9,6 +9,8 @@ import skinCareImg from "../assets/skin_1.jpg";
 import hairCareImg from "../assets/hair_1.jpg";
 import eyeCareImg from "../assets/eye_3.jpg";
 
+
+
 const About = () => {
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });

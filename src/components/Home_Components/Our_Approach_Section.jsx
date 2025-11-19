@@ -4,6 +4,8 @@ import droplet_1 from "../../assets/droplet_1.png";
 import heart_asset from "../../assets/heart_asset.png";
 import microscope_asset from "../../assets/microscope_asset.png";
 
+
+
 const Our_Approach_Section = () => {
   const approaches = [
     {

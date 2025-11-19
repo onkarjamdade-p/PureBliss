@@ -85,10 +85,11 @@ const Main_Section = () => {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight sm:leading-snug"
+            className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight sm:leading-snug whitespace-nowrap"
           >
             Experience Elegance in Care
           </motion.h1>
+
 
           <motion.h2
             initial={{ opacity: 0, y: 15 }}

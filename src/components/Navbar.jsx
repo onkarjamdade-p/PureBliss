@@ -1,221 +1,276 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import logoFull from "../assets/NewLogo3.png";
+
+const PRIMARY_COLOR = "#619696";
+const HOVER_COLOR = "#4d7777";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false);
-  const navigate = useNavigate();
-  const dropdownRef = useRef(null);
 
+  // NEW SEPARATE STATES
+  const [desktopServicesOpen, setDesktopServicesOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+
+  const [desktopLangOpen, setDesktopLangOpen] = useState(false);
+  const [mobileLangOpen, setMobileLangOpen] = useState(false);
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const navigate = useNavigate();
+
+  // refs for click outside (desktop only)
+  const servicesRef = useRef(null);
+  const desktopLangRef = useRef(null);
+
+  // Translate trigger
+  const translateTo = (langCode) => {
+    const select = document.querySelector(".goog-te-combo");
+    if (select) {
+      select.value = langCode;
+      select.dispatchEvent(new Event("change"));
+    }
+  };
+
+  // Close entire mobile menu
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setDesktopServicesOpen(false);
+    setMobileServicesOpen(false);
+    setDesktopLangOpen(false);
+    setMobileLangOpen(false);
+  };
+
+  const navigateService = (path) => {
+    navigate(path);
+    closeMenu();
+  };
+
+  // Disable scroll when sidebar is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "auto";
   }, [menuOpen]);
 
+  // Navbar shrink on scroll
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        window.innerWidth > 768 &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
-        setServicesOpen(false);
+    const onScroll = () => setIsScrolled(window.scrollY > 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Desktop click-outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (servicesRef.current && !servicesRef.current.contains(e.target)) {
+        setDesktopServicesOpen(false);
+      }
+      if (desktopLangRef.current && !desktopLangRef.current.contains(e.target)) {
+        setDesktopLangOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleServiceClick = (path) => {
-    navigate(path);
-    setServicesOpen(false);
-    setMenuOpen(false);
-  };
-
-  const handleBookNow = () => {
-    navigate("/appointment");
-    setMenuOpen(false);
-    setServicesOpen(false);
-  };
-
   return (
-    <nav className="fixed top-0 w-full bg-white shadow-md border-b border-gray-200 z-50 px-6 py-5 md:py-4 transition-all duration-300">
+    <nav
+      className={`fixed top-0 w-full bg-white z-50 transition-all duration-300 ${isScrolled ? "shadow-md border-b py-3" : "py-5"
+        }`}
+    >
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-6">
 
-      {/* ⭐ Adjusted 3-Column Layout Wrapper */}
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between relative md:grid md:grid-cols-[auto_1fr_auto] md:items-center">
-
-        {/* ⭐ Mobile: Center Logo | Desktop: Left Logo 
-           --- CHANGE APPLIED: md:ml-4 moves the logo slightly right on desktop --- */}
-        <Link
-          to="/"
-          className="absolute left-1/2 -translate-x-1/2 md:static md:transform-none md:ml-20"
-          onClick={() => {
-            setMenuOpen(false);
-            setServicesOpen(false);
-          }}
-        >
-          <img
+        {/* LOGO */}
+        <Link to="/" onClick={closeMenu}>
+          <motion.img
             src={logoFull}
-            alt="Pure Bliss Logo"
-            className="h-14 w-auto transition-transform duration-300 hover:scale-105"
+            alt="logo"
+            className="h-10 md:h-12"
+            whileHover={{ scale: 1.05 }}
           />
         </Link>
 
-        {/* ⭐ Desktop Navbar Links (STAYS IN COLUMN 2) */}
-        <ul className="hidden md:flex items-center space-x-10 text-[17px] font-medium text-gray-700 justify-center">
-          <li className="relative group">
-            <Link to="/" className="hover:text-[#619696] transition">
-              Home
-              <span className="absolute left-0 bottom-0 h-[2px] w-0 bg-[#619696] group-hover:w-full transition-all duration-300"></span>
-            </Link>
-          </li>
+        {/* DESKTOP MENU */}
+        <ul className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
 
-          <li className="relative group">
-            <Link to="/about" className="hover:text-[#619696] transition">
-              About
-              <span className="absolute left-0 bottom-0 h-[2px] w-0 bg-[#619696] group-hover:w-full transition-all duration-300"></span>
-            </Link>
-          </li>
+          <li><Link to="/" className="nav-underline">Home</Link></li>
+          <li><Link to="/about" className="nav-underline">About</Link></li>
+          <li><Link to="/contact" className="nav-underline">Contact</Link></li>
 
-          <li className="relative group" ref={dropdownRef}>
+          {/* DESKTOP SERVICES */}
+          <li ref={servicesRef} className="relative">
             <button
-              onClick={() => setServicesOpen(!servicesOpen)}
-              className="flex items-center gap-1 hover:text-[#619696] transition"
+              onClick={() => setDesktopServicesOpen((v) => !v)}
+              className="flex items-center gap-2 nav-underline"
             >
-              Services ▾
+              Services <span>{desktopServicesOpen ? "▲" : "▼"}</span>
             </button>
 
-            {servicesOpen && (
-              <div className="absolute left-0 mt-3 w-56 bg-white rounded-xl border border-gray-100 shadow-xl p-3 space-y-2 animate-fadeDown">
-                {[
-                  { name: "Skin Care", path: "/skincare" },
-                  { name: "Hair Care", path: "/haircare" },
-                  { name: "Eye Care", path: "/eyecare" },
-                  { name: "Semi-Permanent Makeup", path: "/makeup" },
-                ].map((s) => (
-                  <button
-                    key={s.path}
-                    onClick={() => handleServiceClick(s.path)}
-                    className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-[#619696]/10 hover:text-[#619696] transition"
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </li>
-
-          <li className="relative group">
-            <Link to="/contact" className="hover:text-[#619696] transition">
-              Contact
-              <span className="absolute left-0 bottom-0 h-[2px] w-0 bg-[#619696] group-hover:w-full transition-all duration-300"></span>
-            </Link>
+            <AnimatePresence>
+              {desktopServicesOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="dropdown-panel absolute left-1/2 -translate-x-1/2 mt-3 z-50"
+                >
+                  <button onClick={() => navigateService("/skincare")} className="dropdown-item">Skin Care</button>
+                  <button onClick={() => navigateService("/haircare")} className="dropdown-item">Hair Care</button>
+                  <button onClick={() => navigateService("/eyecare")} className="dropdown-item">Eye Care</button>
+                  <button onClick={() => navigateService("/makeup")} className="dropdown-item">Semi-Permanent Makeup</button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </li>
         </ul>
 
-        {/* ⭐ Desktop Book Button (STAYS IN COLUMN 3) */}
-        <button
-          onClick={handleBookNow}
-          className="hidden md:block bg-[#619696] hover:bg-[#4d7777] text-white px-6 py-2 rounded-full font-semibold shadow-md transition hover:scale-110"
-        >
-          Book Appointment
-        </button>
-
-        {/* ⭐ Mobile Hamburger (Unaffected) */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden ml-auto text-gray-800 focus:outline-none text-2xl"
-        >
-          {menuOpen ? <FaTimes /> : <FaBars />}
-        </button>
-      </div>
-
-      {/* ❗ Overlay */}
-      {menuOpen && (
-        <div
-          onClick={() => setMenuOpen(false)}
-          className="fixed inset-0 bg-black/30 z-40"
-        ></div>
-      )}
-
-      {/* ⭐ Mobile Slide Menu */}
-      <div
-        className={`md:hidden fixed top-0 right-0 h-full w-[80%] sm:w-[70%] bg-white shadow-2xl border-l border-gray-200 transition-transform duration-500 z-50 ${menuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-      >
-        {/* Mobile Logo */}
-        <div className="relative flex items-center justify-center px-6 py-4 border-b border-gray-200">
-          <img src={logoFull} alt="Logo" className="h-10" />
-          <FaTimes
-            onClick={() => setMenuOpen(false)}
-            className="absolute right-6 text-2xl text-gray-700 cursor-pointer hover:text-[#619696]"
-          />
-        </div>
-
-        {/* Mobile Links */}
-        <div className="px-6 py-8 flex flex-col space-y-6 text-[18px] font-medium text-gray-700">
-
-          <Link to="/" onClick={() => setMenuOpen(false)} className="hover:text-[#619696]">
-            Home
-          </Link>
-
-          <Link to="/about" onClick={() => setMenuOpen(false)} className="hover:text-[#619696]">
-            About
-          </Link>
-
-          <div>
-            <button
-              onClick={() => setServicesOpen(!servicesOpen)}
-              className="w-full flex justify-between items-center px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-[#619696] font-semibold"
-            >
-              <span>Services</span>
-              <span>{servicesOpen ? "▴" : "▾"}</span>
-            </button>
-
-            {servicesOpen && (
-              <div className="mt-3 space-y-2 bg-white border border-gray-200 rounded-lg p-3 shadow-md animate-fadeDown">
-                {[
-                  { name: "Skin Care", path: "/skincare" },
-                  { name: "Hair Care", path: "/haircare" },
-                  { name: "Eye Care", path: "/eyecare" },
-                  { name: "Semi-Permanent Makeup", path: "/makeup" },
-                ].map((s) => (
-                  <button
-                    key={s.path}
-                    onClick={() => handleServiceClick(s.path)}
-                    className="w-full text-center px-5 py-3 rounded-md text-gray-700 hover:bg-[#f1f5f5] hover:text-[#619696] transition"
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Link to="/contact" onClick={() => setMenuOpen(false)} className="hover:text-[#619696]">
-            Contact
-          </Link>
-
-          <hr className="border-gray-200" />
+        {/* DESKTOP LANGUAGE + CTA */}
+        <div ref={desktopLangRef} className="hidden md:flex items-center gap-6 relative">
 
           <button
-            onClick={handleBookNow}
-            className="w-full bg-[#619696] text-white py-3 rounded-full font-semibold shadow-md hover:bg-[#4d7777] transition"
+            onClick={() => setDesktopLangOpen((v) => !v)}
+            className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2"
+          >
+            <span className="nav-underline">🌐 Translate</span>
+            <span>{desktopLangOpen ? "▲" : "▼"}</span>
+          </button>
+
+          {desktopLangOpen && (
+            <div className="dropdown-panel absolute top-12 left-0 z-50">
+              <button onClick={() => { translateTo("en"); setDesktopLangOpen(false); }} className="lang-item">🇬🇧 English</button>
+              <button onClick={() => { translateTo("hi"); setDesktopLangOpen(false); }} className="lang-item">🇮🇳 Hindi</button>
+              <button onClick={() => { translateTo("mr"); setDesktopLangOpen(false); }} className="lang-item">🇮🇳 Marathi</button>
+            </div>
+          )}
+
+          <motion.button
+            onClick={() => navigate("/appointment")}
+            whileHover={{ backgroundColor: HOVER_COLOR }}
+            className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-full shadow-lg font-semibold"
           >
             Book Appointment
-          </button>
+          </motion.button>
         </div>
+
+        {/* MOBILE MENU ICON */}
+        {!menuOpen && (
+          <button onClick={() => setMenuOpen(true)} className="md:hidden text-2xl text-gray-700">
+            <FaBars />
+          </button>
+        )}
       </div>
 
-      {/* Animation */}
-      <style>{`
-        @keyframes fadeDown {
-          from { opacity: 0; transform: translateY(-6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeDown { animation: fadeDown 0.28s ease-out; }
-      `}</style>
+      {/* BACKDROP */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            onClick={closeMenu}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* MOBILE SIDEBAR */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="md:hidden fixed top-0 right-0 h-full w-[80%] bg-white shadow-xl z-50 overflow-y-auto"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ duration: 0.28 }}
+          >
+
+            {/* CLOSE BUTTON */}
+            <div className="flex justify-end px-6 py-4">
+              <button onClick={closeMenu} className="text-3xl text-gray-600">
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* MOBILE MENU CONTENT */}
+            <div className="px-6 pb-12 flex flex-col space-y-10 text-lg">
+
+              {/* MAIN MENU */}
+              <div className="space-y-3">
+                <p className="text-xs uppercase font-semibold text-gray-500">Main Menu</p>
+
+                <div className="flex flex-col space-y-3">
+                  <Link to="/" onClick={closeMenu} className="nav-underline">Home</Link>
+                  <Link to="/about" onClick={closeMenu} className="nav-underline">About</Link>
+                  <Link to="/contact" onClick={closeMenu} className="nav-underline">Contact</Link>
+                </div>
+              </div>
+
+
+              <hr />
+
+              {/* MOBILE SERVICES */}
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-semibold text-gray-500">Our Services</p>
+
+                <button
+                  className="flex justify-between items-center w-full"
+                  onClick={() => setMobileServicesOpen((v) => !v)}
+                >
+                  <span className="nav-underline">Services</span>
+                  <span>{mobileServicesOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {mobileServicesOpen && (
+                  <div className="pl-3 flex flex-col space-y-2">
+                    <button onClick={() => navigateService("/skincare")} className="nav-underline text-left">Skin Care</button>
+                    <button onClick={() => navigateService("/haircare")} className="nav-underline text-left">Hair Care</button>
+                    <button onClick={() => navigateService("/eyecare")} className="nav-underline text-left">Eye Care</button>
+                    <button onClick={() => navigateService("/makeup")} className="nav-underline text-left">Semi-Permanent Makeup</button>
+                  </div>
+                )}
+              </div>
+
+              <hr />
+
+              {/* MOBILE LANGUAGE */}
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-semibold text-gray-500">Language Options</p>
+
+                <button
+                  className="flex justify-between items-center w-full"
+                  onClick={() => setMobileLangOpen((v) => !v)}
+                >
+                  <span className="nav-underline">🌐 Translate</span>
+                  <span>{mobileLangOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {mobileLangOpen && (
+                  <div className="pl-3 flex flex-col space-y-2">
+                    <button onClick={() => translateTo("en")} className="nav-underline text-left">🇬🇧 English</button>
+                    <button onClick={() => translateTo("hi")} className="nav-underline text-left">🇮🇳 Hindi</button>
+                    <button onClick={() => translateTo("mr")} className="nav-underline text-left">🇮🇳 Marathi</button>
+                  </div>
+                )}
+              </div>
+
+              <hr />
+
+              {/* CTA */}
+              <motion.button
+                onClick={() => { closeMenu(); navigate("/appointment"); }}
+                whileHover={{ backgroundColor: HOVER_COLOR }}
+                className="w-full bg-[var(--color-primary)] text-white py-3 rounded-full font-semibold shadow-md"
+              >
+                Book Appointment
+              </motion.button>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </nav>
   );
 };

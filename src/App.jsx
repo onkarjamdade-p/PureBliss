@@ -1,3 +1,5 @@
+
+
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './screens/Home'
@@ -8,19 +10,20 @@ import HairCare from './screens/HairCare'
 import EyeCare from './screens/EyeCare'
 import SemiPermanentMakeup from './screens/SemiPermanentMakeup'
 
-
 import ScrollToTop from './utils/ScrollToTop'
 
 import Contact from './screens/Contact'
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
 import { Link } from 'react-router-dom';
 import Appointment from './screens/Appointment';
 
 const App = () => {
 
   return (
-    <div className=''>
+    <div>
       <Router>
         <ScrollToTop />
         <Navbar />
@@ -32,14 +35,7 @@ const App = () => {
           <Route path="/eyecare" element={<EyeCare />} />
           <Route path="/makeup" element={<SemiPermanentMakeup />} />
           <Route path="/Appointment" element={<Appointment />} />
-
-
-
-
-
-
           <Route path='/contact' element={<Contact />} />
-
         </Routes>
         <Footer />
       </Router>
@@ -47,4 +43,4 @@ const App = () => {
   )
 }
 
-export default App
+export default App;
