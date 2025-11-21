@@ -23,6 +23,8 @@
 body {
     font-family: "Lato", sans-serif;
     background-color: #f7fbfb;
+    top: 0 !important;
+    /* Reset Google Translate top padding */
 }
 
 h2 {
@@ -51,7 +53,7 @@ h2 {
 /*              GOOGLE TRANSLATE — CLEAN SETUP           */
 /* ===================================================== */
 
-/* Keep Google Translate widget alive but hidden */
+/* Keep Google Translate script alive but invisible */
 #google_translate_element {
     position: absolute !important;
     left: -9999px !important;
@@ -62,35 +64,46 @@ h2 {
     visibility: hidden !important;
 }
 
-/* DO NOT HIDE THIS — required for translation */
-.goog-te-combo {
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Hide only external Google branding */
+/* Hide default Google UI */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+iframe.goog-te-menu-frame,
+.goog-te-gadget,
+.goog-te-spinner,
+.goog-te-balloon-frame,
 .goog-logo-link,
-.goog-te-gadget span {
+.goog-te-gadget span,
+.goog-te-menu-value,
+#goog-gt-tt,
+.skiptranslate {
     display: none !important;
 }
 
-/* Hide Google small icon */
-.goog-te-gadget img {
+/* Hide default dropdown */
+.goog-te-combo {
     display: none !important;
 }
 
-/* Ensure your own Translate button always shows */
+/* Custom translate button stays visible */
 .my-lang-btn,
 .my-lang-btn * {
     visibility: visible !important;
-    opacity: 1 !important;
     display: inline-flex !important;
-    font-size: 16px !important;
-    color: inherit !important;
+    opacity: 1 !important;
+}
+
+/* Style for your custom translate buttons */
+.translate-controls button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: white;
+    cursor: pointer;
 }
 
 /* ===================================================== */
-/*           SLIDING UNDERLINE ANIMATION (DESKTOP + MOBILE) */
+/*           UNDERLINE NAVIGATION EFFECT                 */
 /* ===================================================== */
 
 .nav-underline {
@@ -112,23 +125,13 @@ h2 {
     border-radius: 2px;
 }
 
-/* Desktop Hover */
-.nav-underline:hover::after {
-    width: 100%;
-}
-
-/* Mobile tap + keyboard focus + active route */
+.nav-underline:hover::after,
 .nav-underline:focus::after,
 .nav-underline.active::after {
     width: 100%;
 }
 
-/* Mobile block items support */
-.nav-underline.block::after {
-    width: 0%;
-}
-
-/* Desktop dropdown panel */
+/* Dropdown panel */
 .dropdown-panel {
     padding: 10px 0 !important;
     background: white;
@@ -137,7 +140,6 @@ h2 {
     width: 220px;
 }
 
-/* Items inside dropdown */
 .dropdown-item,
 .lang-item {
     display: flex;
@@ -148,24 +150,20 @@ h2 {
     border-radius: 6px;
     transition: all 0.2s ease;
     color: #333;
-    white-space: nowrap;
 }
 
-/* Hover style */
 .dropdown-item:hover,
 .lang-item:hover {
     background: #f5f8f8;
     color: var(--color-primary);
 }
 
-/* Add spacing between rows */
 .dropdown-item+.dropdown-item,
 .lang-item+.lang-item {
     margin-top: 4px;
 }
 
 /* ===================================================== */
-
 /* ======= GLOW ANIMATION ======= */
 @keyframes heartbeatGlow {
     0% {

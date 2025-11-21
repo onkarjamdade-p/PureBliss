@@ -4,13 +4,27 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logoFull from "../assets/NewLogo3.png";
 
+/* =========================================================
+   CLEAN + SINGLE GOOGLE TRANSLATE FUNCTION
+========================================================= */
+const translateToLang = (langCode) => {
+  const interval = setInterval(() => {
+    const select = document.querySelector(".goog-te-combo");
+
+    if (select) {
+      select.value = langCode;
+      select.dispatchEvent(new Event("change"));
+      clearInterval(interval);
+    }
+  }, 200);
+};
+
 const PRIMARY_COLOR = "#619696";
 const HOVER_COLOR = "#4d7777";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // NEW SEPARATE STATES
   const [desktopServicesOpen, setDesktopServicesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
 
@@ -19,22 +33,12 @@ const Navbar = () => {
 
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const navigate = useNavigate();
-
-  // refs for click outside (desktop only)
   const servicesRef = useRef(null);
   const desktopLangRef = useRef(null);
 
-  // Translate trigger
-  const translateTo = (langCode) => {
-    const select = document.querySelector(".goog-te-combo");
-    if (select) {
-      select.value = langCode;
-      select.dispatchEvent(new Event("change"));
-    }
-  };
+  const navigate = useNavigate();
 
-  // Close entire mobile menu
+  /* Close all dropdowns */
   const closeMenu = () => {
     setMenuOpen(false);
     setDesktopServicesOpen(false);
@@ -43,25 +47,26 @@ const Navbar = () => {
     setMobileLangOpen(false);
   };
 
+  /* Navigate + close menu */
   const navigateService = (path) => {
     navigate(path);
     closeMenu();
   };
 
-  // Disable scroll when sidebar is open
+  /* Disable scroll when sidebar open */
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "auto";
   }, [menuOpen]);
 
-  // Navbar shrink on scroll
+  /* Navbar shrink on scroll */
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 10);
-    onScroll();
     window.addEventListener("scroll", onScroll);
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Desktop click-outside
+  /* Click outside (desktop) */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (servicesRef.current && !servicesRef.current.contains(e.target)) {
@@ -71,6 +76,7 @@ const Navbar = () => {
         setDesktopLangOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -81,7 +87,6 @@ const Navbar = () => {
         }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6">
-
         {/* LOGO */}
         <Link to="/" onClick={closeMenu}>
           <motion.img
@@ -94,10 +99,21 @@ const Navbar = () => {
 
         {/* DESKTOP MENU */}
         <ul className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
-
-          <li><Link to="/" className="nav-underline">Home</Link></li>
-          <li><Link to="/about" className="nav-underline">About</Link></li>
-          <li><Link to="/contact" className="nav-underline">Contact</Link></li>
+          <li>
+            <Link to="/" className="nav-underline">
+              Home
+            </Link>
+          </li>
+          <li>
+            <Link to="/about" className="nav-underline">
+              About
+            </Link>
+          </li>
+          <li>
+            <Link to="/contact" className="nav-underline">
+              Contact
+            </Link>
+          </li>
 
           {/* DESKTOP SERVICES */}
           <li ref={servicesRef} className="relative">
@@ -116,10 +132,30 @@ const Navbar = () => {
                   exit={{ opacity: 0, y: -6 }}
                   className="dropdown-panel absolute left-1/2 -translate-x-1/2 mt-3 z-50"
                 >
-                  <button onClick={() => navigateService("/skincare")} className="dropdown-item">Skin Care</button>
-                  <button onClick={() => navigateService("/haircare")} className="dropdown-item">Hair Care</button>
-                  <button onClick={() => navigateService("/eyecare")} className="dropdown-item">Eye Care</button>
-                  <button onClick={() => navigateService("/makeup")} className="dropdown-item">Semi-Permanent Makeup</button>
+                  <button
+                    onClick={() => navigateService("/skincare")}
+                    className="dropdown-item"
+                  >
+                    Skin Care
+                  </button>
+                  <button
+                    onClick={() => navigateService("/haircare")}
+                    className="dropdown-item"
+                  >
+                    Hair Care
+                  </button>
+                  <button
+                    onClick={() => navigateService("/eyecare")}
+                    className="dropdown-item"
+                  >
+                    Eye Care
+                  </button>
+                  <button
+                    onClick={() => navigateService("/makeup")}
+                    className="dropdown-item"
+                  >
+                    Semi-Permanent Makeup
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -127,8 +163,10 @@ const Navbar = () => {
         </ul>
 
         {/* DESKTOP LANGUAGE + CTA */}
-        <div ref={desktopLangRef} className="hidden md:flex items-center gap-6 relative">
-
+        <div
+          ref={desktopLangRef}
+          className="hidden md:flex items-center gap-6 relative"
+        >
           <button
             onClick={() => setDesktopLangOpen((v) => !v)}
             className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2"
@@ -139,9 +177,33 @@ const Navbar = () => {
 
           {desktopLangOpen && (
             <div className="dropdown-panel absolute top-12 left-0 z-50">
-              <button onClick={() => { translateTo("en"); setDesktopLangOpen(false); }} className="lang-item">🇬🇧 English</button>
-              <button onClick={() => { translateTo("hi"); setDesktopLangOpen(false); }} className="lang-item">🇮🇳 Hindi</button>
-              <button onClick={() => { translateTo("mr"); setDesktopLangOpen(false); }} className="lang-item">🇮🇳 Marathi</button>
+              <button
+                onClick={() => {
+                  translateToLang("en");
+                  setDesktopLangOpen(false);
+                }}
+                className="lang-item"
+              >
+                🇬🇧 English
+              </button>
+              <button
+                onClick={() => {
+                  translateToLang("hi");
+                  setDesktopLangOpen(false);
+                }}
+                className="lang-item"
+              >
+                🇮🇳 Hindi
+              </button>
+              <button
+                onClick={() => {
+                  translateToLang("mr");
+                  setDesktopLangOpen(false);
+                }}
+                className="lang-item"
+              >
+                🇮🇳 Marathi
+              </button>
             </div>
           )}
 
@@ -156,7 +218,10 @@ const Navbar = () => {
 
         {/* MOBILE MENU ICON */}
         {!menuOpen && (
-          <button onClick={() => setMenuOpen(true)} className="md:hidden text-2xl text-gray-700">
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="md:hidden text-2xl text-gray-700"
+          >
             <FaBars />
           </button>
         )}
@@ -185,7 +250,6 @@ const Navbar = () => {
             exit={{ x: "100%" }}
             transition={{ duration: 0.28 }}
           >
-
             {/* CLOSE BUTTON */}
             <div className="flex justify-end px-6 py-4">
               <button onClick={closeMenu} className="text-3xl text-gray-600">
@@ -195,24 +259,36 @@ const Navbar = () => {
 
             {/* MOBILE MENU CONTENT */}
             <div className="px-6 pb-12 flex flex-col space-y-10 text-lg">
-
               {/* MAIN MENU */}
               <div className="space-y-3">
-                <p className="text-xs uppercase font-semibold text-gray-500">Main Menu</p>
+                <p className="text-xs uppercase font-semibold text-gray-500">
+                  Main Menu
+                </p>
 
                 <div className="flex flex-col space-y-3">
-                  <Link to="/" onClick={closeMenu} className="nav-underline">Home</Link>
-                  <Link to="/about" onClick={closeMenu} className="nav-underline">About</Link>
-                  <Link to="/contact" onClick={closeMenu} className="nav-underline">Contact</Link>
+                  <Link to="/" onClick={closeMenu} className="nav-underline">
+                    Home
+                  </Link>
+                  <Link to="/about" onClick={closeMenu} className="nav-underline">
+                    About
+                  </Link>
+                  <Link
+                    to="/contact"
+                    onClick={closeMenu}
+                    className="nav-underline"
+                  >
+                    Contact
+                  </Link>
                 </div>
               </div>
-
 
               <hr />
 
               {/* MOBILE SERVICES */}
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">Our Services</p>
+                <p className="text-xs uppercase font-semibold text-gray-500">
+                  Our Services
+                </p>
 
                 <button
                   className="flex justify-between items-center w-full"
@@ -224,10 +300,30 @@ const Navbar = () => {
 
                 {mobileServicesOpen && (
                   <div className="pl-3 flex flex-col space-y-2">
-                    <button onClick={() => navigateService("/skincare")} className="nav-underline text-left">Skin Care</button>
-                    <button onClick={() => navigateService("/haircare")} className="nav-underline text-left">Hair Care</button>
-                    <button onClick={() => navigateService("/eyecare")} className="nav-underline text-left">Eye Care</button>
-                    <button onClick={() => navigateService("/makeup")} className="nav-underline text-left">Semi-Permanent Makeup</button>
+                    <button
+                      onClick={() => navigateService("/skincare")}
+                      className="nav-underline text-left"
+                    >
+                      Skin Care
+                    </button>
+                    <button
+                      onClick={() => navigateService("/haircare")}
+                      className="nav-underline text-left"
+                    >
+                      Hair Care
+                    </button>
+                    <button
+                      onClick={() => navigateService("/eyecare")}
+                      className="nav-underline text-left"
+                    >
+                      Eye Care
+                    </button>
+                    <button
+                      onClick={() => navigateService("/makeup")}
+                      className="nav-underline text-left"
+                    >
+                      Semi-Permanent Makeup
+                    </button>
                   </div>
                 )}
               </div>
@@ -236,7 +332,9 @@ const Navbar = () => {
 
               {/* MOBILE LANGUAGE */}
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">Language Options</p>
+                <p className="text-xs uppercase font-semibold text-gray-500">
+                  Language Options
+                </p>
 
                 <button
                   className="flex justify-between items-center w-full"
@@ -248,29 +346,45 @@ const Navbar = () => {
 
                 {mobileLangOpen && (
                   <div className="pl-3 flex flex-col space-y-2">
-                    <button onClick={() => translateTo("en")} className="nav-underline text-left">🇬🇧 English</button>
-                    <button onClick={() => translateTo("hi")} className="nav-underline text-left">🇮🇳 Hindi</button>
-                    <button onClick={() => translateTo("mr")} className="nav-underline text-left">🇮🇳 Marathi</button>
+                    <button
+                      onClick={() => translateToLang("en")}
+                      className="nav-underline text-left"
+                    >
+                      🇬🇧 English
+                    </button>
+                    <button
+                      onClick={() => translateToLang("hi")}
+                      className="nav-underline text-left"
+                    >
+                      🇮🇳 Hindi
+                    </button>
+                    <button
+                      onClick={() => translateToLang("mr")}
+                      className="nav-underline text-left"
+                    >
+                      🇮🇳 Marathi
+                    </button>
                   </div>
                 )}
               </div>
 
               <hr />
 
-              {/* CTA */}
+              {/* CTA BUTTON */}
               <motion.button
-                onClick={() => { closeMenu(); navigate("/appointment"); }}
+                onClick={() => {
+                  closeMenu();
+                  navigate("/appointment");
+                }}
                 whileHover={{ backgroundColor: HOVER_COLOR }}
                 className="w-full bg-[var(--color-primary)] text-white py-3 rounded-full font-semibold shadow-md"
               >
                 Book Appointment
               </motion.button>
-
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
     </nav>
   );
 };
