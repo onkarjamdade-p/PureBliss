@@ -46,7 +46,7 @@ const Services_Section = () => {
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
+        transition={{ delay: 0.1, duration: 0.0 }}
         viewport={{ once: true }}
         className="relative w-full mt-16 overflow-hidden py-4 bg-gradient-to-r from-[#e9f4f4] via-white to-[#e9f4f4]"
       >
@@ -54,12 +54,14 @@ const Services_Section = () => {
           animate={{ x: ["100%", "-100%"] }}
           transition={{
             repeat: Infinity,
-            duration: 20,
+            duration: 15,
             ease: "linear",
           }}
           className="text-center text-[#4d7777] text-lg font-medium whitespace-nowrap"
         >
-          ✨ Skin • Hair • Eye • Aesthetic Care — Designed to Bring Out Your Natural Glow ✨
+          ✨ Skin • Hair • Eye • Aesthetic Care — Designed to Bring Out Your Natural Glow ✨ | ✨ Advanced Treatments • Expert Care • Personalized Solutions ✨
+
+
         </motion.p>
       </motion.div>
     </section>

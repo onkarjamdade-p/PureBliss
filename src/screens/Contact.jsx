@@ -163,6 +163,7 @@ Looking forward to your response.%0AThank you!`;
                                         <input
                                             type="text"
                                             name="firstName"
+                                            maxLength={100}
                                             value={formData.firstName}
                                             onChange={handleChange}
                                             placeholder="First name"
@@ -171,6 +172,7 @@ Looking forward to your response.%0AThank you!`;
                                         <input
                                             type="text"
                                             name="lastName"
+                                            maxLength={100}
                                             value={formData.lastName}
                                             onChange={handleChange}
                                             placeholder="Last name"
@@ -196,6 +198,7 @@ Looking forward to your response.%0AThank you!`;
                                     <input
                                         type="number"
                                         name="phone"
+                                        maxLength={10}
                                         value={formData.phone}
                                         onChange={handleChange}
                                         placeholder="Your phone number"

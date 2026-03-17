@@ -192,6 +192,53 @@ const MobileSummary = ({ name, phone, date, slot, selectedServices, idToService,
 
 
 /* -------------------- MAIN COMPONENT -------------------- */
+/* -------------------- PAGE LOADER -------------------- */
+
+const PageLoader = () => (
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-white/80 backdrop-blur-md flex items-center justify-center z-[9999]"
+    >
+        <div className="flex flex-col items-center gap-6">
+
+            {/* Animated Rings */}
+            <div className="relative flex items-center justify-center">
+
+                <motion.div
+                    animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.6 }}
+                    className="absolute w-20 h-20 rounded-full border-4 border-[#5bb9b9]"
+                />
+
+                <motion.div
+                    animate={{ scale: [1, 1.8], opacity: [0.4, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.6, delay: 0.3 }}
+                    className="absolute w-20 h-20 rounded-full border-4 border-[#619696]"
+                />
+
+                {/* Center Spinner */}
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="w-12 h-12 border-4 border-[#619696] border-t-transparent rounded-full"
+                />
+            </div>
+
+            {/* Animated Text */}
+            <motion.p
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ repeat: Infinity, duration: 1.6 }}
+                className="text-[#0b3d3d] font-semibold text-lg"
+            >
+                Sending Appointment...
+            </motion.p>
+
+        </div>
+    </motion.div>
+);
+
 
 const Appointment = () => {
     const [step, setStep] = useState(1);
@@ -204,6 +251,13 @@ const Appointment = () => {
     const [loading, setLoading] = useState(false);
 
     /* Dynamically choose short or long time slots */
+
+
+
+
+
+
+
     const currentSlots = useMemo(() => {
         if (selectedServices.length >= 3) {
             if (!LONG_SLOTS.includes(slot)) setSlot("");
@@ -293,6 +347,7 @@ Pure Bliss Skin & Eye Clinic`;
                     ? "bg-[#619696] text-white shadow-lg"
                     : currentStep > step
                         ? "bg-[#5bb9b9]/20 text-[#0b3d3d]"
+
                         : "bg-gray-200 text-gray-500"
                     }`}
             >
@@ -310,6 +365,8 @@ Pure Bliss Skin & Eye Clinic`;
 
     return (
         <div className="min-h-screen bg-[#f8fbfb] text-[#0b3d3d] pb-20 sm:pb-12 pt-20 sm:pt-24">
+
+            {loading && <PageLoader />}
             {/* HEADER BANNER */}
             <div className="max-w-3xl sm:max-w-6xl mx-auto px-3 sm:px-6 mb-10">
                 <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl h-44 sm:h-56 flex items-center justify-center">
@@ -379,6 +436,7 @@ Pure Bliss Skin & Eye Clinic`;
 
                                             <input
                                                 value={name}
+                                                maxLength={50}
                                                 onChange={(e) => setName(e.target.value.replace(/[^A-Za-z\s]/g, ""))}
                                                 placeholder="Full Name"
                                                 className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 ${errors.name
@@ -571,7 +629,7 @@ Pure Bliss Skin & Eye Clinic`;
                                                 !name.trim() ||
                                                 !phone.trim()
                                             }
-                                            className={`px-8 py-3 rounded-xl shadow-lg font-semibold flex items-center justify-center gap-2 ${loading ||
+                                            className={`px-8 py-3 rounded-xl shadow-lg font-semibold flex items-center justify-center gap-2 transition-all ${loading ||
                                                 !date ||
                                                 !slot ||
                                                 !selectedServices.length ||
@@ -582,7 +640,10 @@ Pure Bliss Skin & Eye Clinic`;
                                                 }`}
                                         >
                                             {loading ? (
-                                                <Loader2 className="animate-spin" />
+                                                <>
+                                                    <Loader2 className="animate-spin w-5 h-5" />
+                                                    <span>Sending...</span>
+                                                </>
                                             ) : (
                                                 <>
                                                     <span className="hidden md:inline">
@@ -677,6 +738,11 @@ Pure Bliss Skin & Eye Clinic`;
                 step={step}
             />
         </div>
+
+
+
+
+
     );
 };
 
