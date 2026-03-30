@@ -522,7 +522,14 @@ const Appointment = () => {
             setLoading(false);
             setSuccess(true);
             setTimeout(() => {
-                window.open(`https://wa.me/9922442405?text=${encodeURIComponent(msg)}`, "_blank");
+                const whatsappUrl = `https://wa.me/919922442405?text=${encodeURIComponent(msg)}`;
+
+                if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    window.location.href = whatsappUrl;
+                } else {
+                    window.open(whatsappUrl, "_blank");
+                }
+
                 setSuccess(false);
             }, 1500);
         }, 900);
