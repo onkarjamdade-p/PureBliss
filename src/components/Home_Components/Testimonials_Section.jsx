@@ -7,20 +7,17 @@ import Testimonials_2 from "../../assets/video/Testimonials_2.mp4";
 import Testimonials_3 from "../../assets/video/Testimonials_3.mp4";
 import Testimonials_4 from "../../assets/video/Testimonials_4.mp4";
 
-const testimonials_data = [
-  { id: 1, video: Testimonials_1 },
-  { id: 2, video: Testimonials_2 },
-  { id: 3, video: Testimonials_3 },
-  { id: 4, video: Testimonials_4 },
+const TESTIMONIALS = [
+  { id: 1, video: Testimonials_1, label: "Client 1" },
+  { id: 2, video: Testimonials_2, label: "Client 2" },
+  { id: 3, video: Testimonials_3, label: "Client 3" },
+  { id: 4, video: Testimonials_4, label: "Client 4" },
 ];
-
-// === Optimized Testimonials Section (Option A) ===
 
 const Testimonials_Section = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
-  // NEW: State to track if the video was playing *before* the tab was hidden
   const [wasPlayingBeforeHide, setWasPlayingBeforeHide] = useState(true);
   const [isFading, setIsFading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,173 +27,80 @@ const Testimonials_Section = () => {
   const observerRef = useRef(null);
   const timersRef = useRef([]);
 
-  // clear timers helper
-  const clearTimers = () => {
-    timersRef.current.forEach((t) => clearTimeout(t));
-    timersRef.current = [];
-  };
+  const clearTimers = () => { timersRef.current.forEach(clearTimeout); timersRef.current = []; };
 
-  // playSafe attempts to play and updates isPlaying state
   const playSafe = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
     const p = vid.play();
-    if (p && typeof p.then === "function") {
-      p.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    } else {
-      setIsPlaying(!vid.paused);
-    }
+    if (p?.then) p.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    else setIsPlaying(!vid.paused);
   }, []);
 
-  // swap video source without unmounting <video>
   const setVideoSource = useCallback((index) => {
     const vid = videoRef.current;
     if (!vid) return;
-
     setIsLoading(true);
-
-    const newSrc = testimonials_data[index].video;
-    if (vid.src && vid.src.includes(newSrc)) {
-      setIsLoading(false);
-      playSafe();
-      return;
-    }
-
-    try {
-      // Pause before setting new source
-      vid.pause();
-      setIsPlaying(false);
-
-      vid.src = newSrc;
-      vid.load();
-    } catch (e) {
-      try {
-        const source = vid.querySelector("source");
-        if (source) {
-          source.src = newSrc;
-          vid.load();
-        }
-      } catch (err) {
-        // silent
-      }
-    }
+    const newSrc = TESTIMONIALS[index].video;
+    if (vid.src?.includes(newSrc)) { setIsLoading(false); playSafe(); return; }
+    try { vid.pause(); setIsPlaying(false); vid.src = newSrc; vid.load(); }
+    catch { try { const s = vid.querySelector("source"); if (s) { s.src = newSrc; vid.load(); } } catch { } }
   }, [playSafe]);
 
-  // CHANGE SLIDE with a short fade (we don't unmount video)
-  const changeTo = useCallback(
-    (newIndex) => {
-      if (newIndex === activeIndex) return;
-      clearTimers();
+  const changeTo = useCallback((newIndex) => {
+    if (newIndex === activeIndex) return;
+    clearTimers();
+    setWasPlayingBeforeHide(videoRef.current ? !videoRef.current.paused : isPlaying);
+    setIsFading(true);
+    const t = setTimeout(() => { setActiveIndex(newIndex); setVideoSource(newIndex); }, 220);
+    timersRef.current.push(t);
+  }, [activeIndex, setVideoSource, isPlaying]);
 
-      // Ensure we record the current playing state
-      setWasPlayingBeforeHide(videoRef.current ? !videoRef.current.paused : isPlaying);
+  const next = useCallback(() => changeTo((activeIndex + 1) % TESTIMONIALS.length), [activeIndex, changeTo]);
+  const prev = useCallback(() => changeTo((activeIndex - 1 + TESTIMONIALS.length) % TESTIMONIALS.length), [activeIndex, changeTo]);
 
-      setIsFading(true);
-
-      const t1 = setTimeout(() => {
-        setActiveIndex(newIndex);
-        setVideoSource(newIndex);
-      }, 220);
-
-      timersRef.current.push(t1);
-    },
-    [activeIndex, setVideoSource, isPlaying]
-  );
-
-  const next = useCallback(() => changeTo((activeIndex + 1) % testimonials_data.length), [activeIndex, changeTo]);
-  const prev = useCallback(() => changeTo((activeIndex - 1 + testimonials_data.length) % testimonials_data.length), [activeIndex, changeTo]);
-
-  // Handler for when video is ready to play
   const handleCanPlayThrough = useCallback(() => {
     setIsLoading(false);
-
-    if (isFading) {
-      clearTimers();
-      const t2 = setTimeout(() => setIsFading(false), 260);
-      timersRef.current.push(t2);
-    }
-
-    // Only attempt play if the user didn't explicitly pause it
-    if (isPlaying) {
-      playSafe();
-    }
+    if (isFading) { clearTimers(); const t = setTimeout(() => setIsFading(false), 260); timersRef.current.push(t); }
+    if (isPlaying) playSafe();
   }, [isFading, isPlaying, playSafe]);
 
-  // When activeIndex changes, ensure video source is set (covers direct calls to setActiveIndex)
-  useEffect(() => {
-    setVideoSource(activeIndex);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex]);
+  useEffect(() => { setVideoSource(activeIndex); }, [activeIndex]);
 
-  // --- NEW: Page Visibility API for pausing on tab switch ---
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Tab is hidden: record current state and pause
-        setWasPlayingBeforeHide(!vid.paused);
-        try {
-          vid.pause();
-          setIsPlaying(false);
-        } catch (e) { /* ignore */ }
-      } else {
-        // Tab is visible: if it was playing before, resume
-        // We also check intersection observer status to ensure it's in the viewport
-        if (wasPlayingBeforeHide && vid.hasAttribute('data-is-intersecting')) {
-          playSafe();
-        }
-      }
+    const handle = () => {
+      if (document.hidden) { setWasPlayingBeforeHide(!vid.paused); try { vid.pause(); setIsPlaying(false); } catch { } }
+      else if (wasPlayingBeforeHide && vid.hasAttribute("data-intersecting")) playSafe();
     };
+    document.addEventListener("visibilitychange", handle);
+    return () => document.removeEventListener("visibilitychange", handle);
+  }, [playSafe, wasPlayingBeforeHide]);
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [playSafe, wasPlayingBeforeHide]); // Include wasPlayingBeforeHide as a dependency
-
-  // IntersectionObserver: autoplay when visible, pause otherwise (moderate threshold)
   useEffect(() => {
     const container = containerRef.current;
     const vid = videoRef.current;
     if (!container || !vid) return;
-
-    let debounceT = null;
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (debounceT) clearTimeout(debounceT);
-          debounceT = setTimeout(() => {
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
-              // Add attribute to signal intersection state for the Page Visibility handler
-              vid.setAttribute('data-is-intersecting', 'true');
-              if (!isLoading && !document.hidden) playSafe();
-            } else {
-              vid.removeAttribute('data-is-intersecting');
-              try {
-                vid.pause();
-                setIsPlaying(false);
-              } catch (e) {
-                // ignore
-              }
-            }
-          }, 110);
-        });
-      },
-      { threshold: [0.45, 0.5] }
-    );
-
+    let dt = null;
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (dt) clearTimeout(dt);
+        dt = setTimeout(() => {
+          if (e.isIntersecting && e.intersectionRatio >= 0.45) {
+            vid.setAttribute("data-intersecting", "true");
+            if (!isLoading && !document.hidden) playSafe();
+          } else {
+            vid.removeAttribute("data-intersecting");
+            try { vid.pause(); setIsPlaying(false); } catch { }
+          }
+        }, 110);
+      });
+    }, { threshold: [0.45, 0.5] });
     observerRef.current.observe(container);
-
-    return () => {
-      if (observerRef.current) observerRef.current.disconnect();
-      if (debounceT) clearTimeout(debounceT);
-    };
+    return () => { observerRef.current?.disconnect(); if (dt) clearTimeout(dt); };
   }, [playSafe, isLoading]);
 
-  // Keyboard (left/right, space)
   useEffect(() => {
     const handler = (e) => {
       if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
@@ -206,186 +110,215 @@ const Testimonials_Section = () => {
         e.preventDefault();
         const vid = videoRef.current;
         if (!vid) return;
-        if (vid.paused) playSafe();
-        else {
-          vid.pause();
-          setIsPlaying(false);
-        }
+        if (vid.paused) playSafe(); else { vid.pause(); setIsPlaying(false); }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [next, prev, playSafe]);
 
-  // Mute toggle
   const toggleMute = (e) => {
-    if (e) e.stopPropagation();
+    e?.stopPropagation();
     const vid = videoRef.current;
     if (!vid) return;
-    const newMuted = !isMuted;
-    setIsMuted(newMuted);
-    vid.muted = newMuted;
-    playSafe();
+    const m = !isMuted; setIsMuted(m); vid.muted = m; playSafe();
   };
 
-  // Play/pause toggle
   const togglePlayPause = (e) => {
-    if (e) e.stopPropagation();
+    e?.stopPropagation();
     const vid = videoRef.current;
     if (!vid) return;
-    if (vid.paused) playSafe();
-    else {
-      vid.pause();
-      setIsPlaying(false);
-    }
+    if (vid.paused) playSafe(); else { vid.pause(); setIsPlaying(false); }
   };
 
-  // Simple swipe handlers (lightweight)
   const touchStartX = useRef(0);
   const onTouchStart = (e) => (touchStartX.current = e.touches?.[0]?.clientX || 0);
   const onTouchEnd = (e) => {
-    const endX = e.changedTouches?.[0]?.clientX || 0;
-    const delta = touchStartX.current - endX;
-    const threshold = 45;
-    if (delta > threshold) next();
-    else if (delta < -threshold) prev();
+    const delta = touchStartX.current - (e.changedTouches?.[0]?.clientX || 0);
+    if (delta > 45) next(); else if (delta < -45) prev();
     touchStartX.current = 0;
   };
 
-  // cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      clearTimers();
-    };
-  }, []);
+  useEffect(() => () => clearTimers(), []);
 
   return (
     <section
       ref={containerRef}
-      className="relative py-20 bg-gradient-to-b from-[#eef7f7] to-[#dfeff0] flex flex-col items-center overflow-hidden"
+      className="relative py-24 md:py-32 overflow-hidden"
+      style={{
+        background: "linear-gradient(160deg, #eaf5f5 0%, #d6ecec 55%, #cce8e8 100%)",
+        fontFamily: "'DM Sans', sans-serif"
+      }}
       aria-label="Client testimonials"
     >
-      <motion.h2
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        viewport={{ once: true }}
-        className="text-3xl md:text-4xl font-extrabold text-[#083333] mb-8 text-center"
-      >
-        What Our <span className="text-[#619696]">Clients Say</span>
-      </motion.h2>
+      {/* Font */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
 
-      <div className="w-full max-w-5xl px-4">
-        <div
-          className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/30"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+      {/* Background texture */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle at 1.5px 1.5px, #2d6b6b 1px, transparent 0)",
+          backgroundSize: "28px 28px"
+        }} />
+
+      {/* Glow orbs */}
+      <div className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(91,185,185,0.1) 0%, transparent 70%)" }} />
+      <div className="absolute -bottom-32 -left-32 w-[480px] h-[480px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(45,107,107,0.09) 0%, transparent 70%)" }} />
+
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-8">
+
+        {/* ── Heading ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          viewport={{ once: true }}
+          className="text-center mb-12 md:mb-14"
         >
-          {/* single video element - never unmounted */}
-          <video
-            ref={videoRef}
-            preload="metadata"
-            playsInline
-            muted={isMuted}
-            onCanPlayThrough={handleCanPlayThrough}
-            className="w-full h-[min(66vh,520px)] md:h-[min(72vh,700px)] lg:h-[min(68vh,720px)] object-contain bg-black"
-            onClick={togglePlayPause}
-            aria-label={`Testimonial video ${activeIndex + 1}`}
-          >
-            <source src={testimonials_data[activeIndex].video} type="video/mp4" />
-            {/* fallback text */}
-            Your browser does not support the video tag.
-          </video>
-
-          {/* Loading Indicator Overlay */}
-          {isLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 transition-opacity duration-300">
-              <Loader2 className="animate-spin text-white h-10 w-10 mb-4" />
-              <p className="text-white/70 text-sm">Loading testimonial...</p>
-            </div>
-          )}
-
-          {/* elegant top/bottom gradients */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/20 to-transparent" />
-          </div>
-
-          {/* left/right controls */}
-          <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                prev();
-              }}
-              aria-label="Previous testimonial"
-              className="pointer-events-auto bg-white/90 hover:bg-white text-[#083333] p-3 rounded-full shadow-lg backdrop-blur-md"
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                next();
-              }}
-              aria-label="Next testimonial"
-              className="pointer-events-auto bg-white/90 hover:bg-white text-[#083333] p-3 rounded-full shadow-lg backdrop-blur-md"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-
-          {/* controls cluster */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-3 z-20">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleMute(e);
-              }}
-              aria-pressed={!isMuted}
-              aria-label={isMuted ? "Unmute video" : "Mute video"}
-              className="bg-white/90 hover:bg-white text-[#083333] rounded-full p-2 shadow-lg backdrop-blur-sm"
-            >
-              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlayPause(e);
-              }}
-              aria-pressed={isPlaying}
-              aria-label={isPlaying ? "Pause video" : "Play video"}
-              className="bg-white/80 hover:bg-white text-[#083333] rounded-full p-2 shadow-lg backdrop-blur-sm flex items-center justify-center"
-            >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-          </div>
-
-          {/* fade overlay (used during src swap) */}
-          <div
-            aria-hidden
-            className={`absolute inset-0 pointer-events-none transition-opacity duration-250 ${isFading ? "opacity-70 bg-black/60" : "opacity-0"
-              }`}
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.28em] text-[#5bb9b9] mb-3">
+            Real Stories
+          </p>
+          <h2 className="text-[#1a3d3d] leading-tight mb-4"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif", fontWeight: 300,
+              fontSize: "clamp(1.9rem, 5vw, 3rem)"
+            }}>
+            What Our{" "}
+            <span className="italic" style={{ color: "#3a8080" }}>Clients Say</span>
+          </h2>
+          <motion.div
+            initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }} viewport={{ once: true }}
+            className="mx-auto h-px w-16 origin-center"
+            style={{ background: "linear-gradient(90deg, transparent, #5bb9b9, transparent)" }}
           />
-        </div>
+        </motion.div>
 
-        {/* indicators */}
-        <div className="flex items-center justify-center gap-3 mt-6">
-          {testimonials_data.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => changeTo(i)}
-              aria-label={`Go to testimonial ${i + 1}`}
-              className={`w-3.5 h-3.5 md:w-4 md:h-4 rounded-full transition-all duration-200 ${i === activeIndex ? "bg-[#619696] scale-110" : "bg-gray-300/70 hover:scale-105"
-                }`}
-            />
-          ))}
-        </div>
+        {/* ── Video player ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true }}
+        >
+          <div
+            className="relative rounded-3xl overflow-hidden bg-black
+                       border border-white/10
+                       shadow-[0_24px_80px_rgba(45,107,107,0.18)]"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
+            {/* Video */}
+            <video
+              ref={videoRef}
+              preload="metadata"
+              playsInline
+              muted={isMuted}
+              onCanPlayThrough={handleCanPlayThrough}
+              onClick={togglePlayPause}
+              aria-label={`Testimonial video ${activeIndex + 1}`}
+              className="w-full object-contain bg-black cursor-pointer"
+              style={{ height: "min(66vh, 520px)" }}
+            >
+              <source src={TESTIMONIALS[activeIndex].video} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+
+            {/* Loading overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 z-30">
+                <div className="relative flex items-center justify-center mb-4">
+                  {[0, 0.4, 0.8].map((d, i) => (
+                    <motion.div key={i}
+                      className="absolute rounded-full border border-[#5bb9b9]/40"
+                      style={{ width: 40 + i * 20, height: 40 + i * 20 }}
+                      animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
+                      transition={{ duration: 1.8, repeat: Infinity, delay: d }} />
+                  ))}
+                  <Loader2 className="animate-spin text-[#5bb9b9] w-8 h-8" />
+                </div>
+                <p className="text-white/50 text-xs tracking-widest uppercase">Loading…</p>
+              </div>
+            )}
+
+            {/* Top/bottom gradients */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 left-0 right-0 h-20"
+                style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.28), transparent)" }} />
+              <div className="absolute bottom-0 left-0 right-0 h-28"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.35), transparent)" }} />
+            </div>
+
+            {/* Slide counter — top left */}
+            <div className="absolute top-4 left-4 z-20">
+              <span className="text-[10px] font-semibold uppercase tracking-widest
+                               bg-black/30 backdrop-blur-sm border border-white/15
+                               text-white/80 px-2.5 py-1 rounded-full">
+                {activeIndex + 1} / {TESTIMONIALS.length}
+              </span>
+            </div>
+
+            {/* Nav arrows */}
+            <div className="absolute inset-0 flex items-center justify-between px-3 sm:px-4 pointer-events-none z-20">
+              {[{ fn: prev, icon: ChevronLeft, label: "Previous" },
+              { fn: next, icon: ChevronRight, label: "Next" }].map(({ fn, icon: Icon, label }) => (
+                <button key={label}
+                  onClick={(e) => { e.stopPropagation(); fn(); }}
+                  aria-label={`${label} testimonial`}
+                  className="pointer-events-auto
+                             w-9 h-9 sm:w-10 sm:h-10 rounded-full
+                             bg-white/85 hover:bg-white
+                             text-[#1a3d3d] shadow-lg backdrop-blur-sm
+                             flex items-center justify-center
+                             transition-all duration-200 hover:scale-105 hover:shadow-xl">
+                  <Icon size={18} />
+                </button>
+              ))}
+            </div>
+
+            {/* Controls cluster — bottom right */}
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+              <button onClick={toggleMute}
+                aria-label={isMuted ? "Unmute" : "Mute"}
+                className="w-8 h-8 rounded-full bg-white/85 hover:bg-white
+                           text-[#1a3d3d] shadow-md backdrop-blur-sm
+                           flex items-center justify-center
+                           transition-all duration-200 hover:scale-105">
+                {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+              </button>
+              <button onClick={togglePlayPause}
+                aria-label={isPlaying ? "Pause" : "Play"}
+                className="w-8 h-8 rounded-full bg-white/85 hover:bg-white
+                           text-[#1a3d3d] shadow-md backdrop-blur-sm
+                           flex items-center justify-center
+                           transition-all duration-200 hover:scale-105">
+                {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+            </div>
+
+            {/* Fade overlay (src swap) */}
+            <div aria-hidden
+              className={`absolute inset-0 pointer-events-none bg-black transition-opacity duration-250
+                          ${isFading ? "opacity-60" : "opacity-0"}`} />
+          </div>
+
+          {/* ── Dot indicators ── */}
+          <div className="flex items-center justify-center gap-2.5 mt-6">
+            {TESTIMONIALS.map((_, i) => (
+              <button key={i} onClick={() => changeTo(i)}
+                aria-label={`Go to testimonial ${i + 1}`}
+                className={`rounded-full transition-all duration-300
+                  ${i === activeIndex
+                    ? "w-6 h-2.5 bg-[#2d6b6b]"
+                    : "w-2.5 h-2.5 bg-[#9ab8b8]/50 hover:bg-[#5bb9b9]/60"}`}
+              />
+            ))}
+          </div>
+        </motion.div>
+
       </div>
-
-      <div className="pointer-events-none absolute -bottom-36 w-[520px] h-[520px] rounded-full bg-[#619696]/18 blur-3xl" />
     </section>
   );
 };

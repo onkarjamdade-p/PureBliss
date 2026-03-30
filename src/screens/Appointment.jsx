@@ -1,74 +1,37 @@
-
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import loadingLogo from "../assets/logo_1.png";
 import {
-    Calendar,
-    Loader2,
-    ChevronLeft,
-    ChevronRight,
-    User,
-    Phone,
-    CheckCircle,
-    ChevronDown,
-    ChevronUp,
+    Loader2, User, Phone, CheckCircle, ChevronDown,
+    Sparkles, Clock, CalendarDays, ChevronLeft, ChevronRight,
+    Sun, Sunrise, Sunset,
 } from "lucide-react";
 
-/* -------------------- Helpers -------------------- */
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
 const formatDisplayDate = (d) =>
-    d
-        ? d.toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            weekday: "short",
-        })
-        : "—";
+    d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", weekday: "short" }) : "—";
 
-/* -------------------- Date Carousel -------------------- */
-const HorizontalDateCarousel = ({ selected, onSelect }) => {
-    const days = Array.from({ length: 30 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() + i);
-        d.setHours(0, 0, 0, 0);
-        return d;
-    });
+const today = new Date();
+today.setHours(0, 0, 0, 0);
 
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="overflow-x-auto py-2 -mx-2 sm:-mx-6 md:mx-0"
-        >
-            <div className="flex gap-2 sm:gap-3 px-2 sm:px-6 md:px-0">
-                {days.map((d) => {
-                    const isSelected = selected && selected.getTime() === d.getTime();
-                    return (
-                        <button
-                            key={d.toISOString()}
-                            onClick={() => onSelect(new Date(d))}
-                            className={`min-w-[60px] px-2 sm:px-3 py-2 sm:py-3 rounded-xl border-2 text-center transition-all ${isSelected
-                                ? "bg-[#619696] border-[#619696] text-white shadow-md scale-[1.02]"
-                                : "bg-white text-[#0b3d3d] border-[#e0f1f1] hover:border-[#5bb9b9]"
-                                }`}
-                        >
-                            <div className="text-xs font-medium uppercase tracking-wider">
-                                {d.toLocaleString("en-US", { weekday: "short" })}
-                            </div>
-                            <div className="text-xl font-extrabold mt-0.5">{d.getDate()}</div>
-                        </button>
-                    );
-                })}
-            </div>
-        </motion.div>
-    );
+const isSameDay = (a, b) =>
+    a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const isBefore = (d) => {
+    const c = new Date(d); c.setHours(0, 0, 0, 0);
+    return c < today;
 };
 
-/* -------------------- Services Data -------------------- */
+/* ─────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────── */
 const SERVICES_DATA = {
     "Skin Care": [
         { id: "chemical_peel", label: "Chemical Peel" },
         { id: "carbon_peel", label: "Carbon Peel (Hollywood Peel)" },
-        { id: "lhr", label: "Laser Hair Reduction (LHR)" },
+        { id: "lhr", label: "Laser Hair Reduction" },
         { id: "mnrf", label: "MNRF Treatment" },
         { id: "hifu", label: "HIFU Face Lift" },
     ],
@@ -94,655 +57,764 @@ const SERVICES_DATA = {
     ],
 };
 
-/* -------------------- Time Slots -------------------- */
-const APPOINTMENT_DURATION = 90;
-const INTERVAL_MINUTES = 30;
-const CLOSING_MINUTES = 22 * 60;
-
-const generateTimeSlots = (startHour, interval, limitMinutes) => {
-    const slots = [];
-    let current = startHour * 60;
-
-    while (current <= limitMinutes) {
-        const hours = Math.floor(current / 60);
-        const minutes = current % 60;
-
-        const t = new Date(0, 0, 0, hours, minutes).toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-        });
-
-        slots.push(t);
-        current += interval;
-    }
-    return slots;
+const CATEGORY_ICON = {
+    "Skin Care": "✦",
+    "Hair Care": "◈",
+    "Semi-Permanent Makeup": "◇",
+    "Eye Care": "◉",
 };
 
-const SHORT_SLOTS = generateTimeSlots(10, INTERVAL_MINUTES, CLOSING_MINUTES - APPOINTMENT_DURATION);
-const LONG_SLOTS = generateTimeSlots(10, INTERVAL_MINUTES, 16 * 60);
+/* ─────────────────────────────────────────────
+   TIME SLOT GENERATION
+───────────────────────────────────────────── */
+const makeSlot = (h, m) => ({
+    id: `${h}:${String(m).padStart(2, "0")}`,
+    label: new Date(0, 0, 0, h, m).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+    hour: h,
+});
 
-/* -------------------- Mobile Summary -------------------- */
-const MobileSummary = ({ name, phone, date, slot, selectedServices, idToService, step }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+// Short slots: 10am–8:30pm (30-min), Long slots: 10am–4pm (limited)
+const ALL_SHORT = [];
+const ALL_LONG = [];
+for (let m = 10 * 60; m <= 20 * 60 + 30; m += 30) {
+    ALL_SHORT.push(makeSlot(Math.floor(m / 60), m % 60));
+}
+for (let m = 10 * 60; m <= 16 * 60; m += 30) {
+    ALL_LONG.push(makeSlot(Math.floor(m / 60), m % 60));
+}
 
-    const show = step >= 2 || name || phone || date || slot || selectedServices.length;
-    if (!show) return null;
+const SESSION_GROUPS = [
+    { key: "morning", label: "Morning", icon: Sunrise, range: [11, 12] }, // 11:00 – 12:00
+    { key: "afternoon", label: "Afternoon", icon: Sun, range: [13, 14] }, // 1:00 – 2:00
+    { key: "evening", label: "Evening", icon: Sunset, range: [17, 21] }, // 5:00 – 9:00
+];
 
-    const summary = [
-        { label: "Name", value: name || "—" },
-        { label: "Phone", value: phone || "—" },
-        { label: "Date", value: date ? formatDisplayDate(date) : "—" },
-        { label: "Time", value: slot || "—" },
-    ];
+const groupSlots = (slots) =>
+    SESSION_GROUPS.map((g) => ({
+        ...g,
+        slots: slots.filter((s) => s.hour >= g.range[0] && s.hour < g.range[1]),
+    })).filter((g) => g.slots.length > 0);
+
+/* ─────────────────────────────────────────────
+   SMART CALENDAR
+───────────────────────────────────────────── */
+const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+const SmartCalendar = ({ selected, onSelect }) => {
+    const [viewYear, setViewYear] = useState(today.getFullYear());
+    const [viewMonth, setViewMonth] = useState(today.getMonth());
+    const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+
+    const navigate = (delta) => {
+        setDirection(delta);
+        let m = viewMonth + delta;
+        let y = viewYear;
+        if (m > 11) { m = 0; y++; }
+        if (m < 0) { m = 11; y--; }
+        setViewMonth(m);
+        setViewYear(y);
+    };
+
+    // Build calendar grid
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(viewYear, viewMonth, d));
+
+    // Can we go back? Don't allow navigating before current month
+    const canGoBack = viewYear > today.getFullYear() || viewMonth > today.getMonth();
+    // Max 3 months ahead
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, 1);
+    const canGoForward = new Date(viewYear, viewMonth + 1, 1) < maxDate;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t-4 border-[#5bb9b9] shadow-xl z-30">
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex justify-between w-full px-4 py-3 text-base font-bold text-[#619696]"
-            >
-                {isExpanded ? "Hide Summary" : "View Summary"}
-                {isExpanded ? <ChevronDown /> : <ChevronUp />}
-            </button>
+        <div className="bg-white rounded-2xl border border-[#e8f2f2] overflow-hidden">
+            {/* Month nav */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#eef4f4]">
+                <button
+                    onClick={() => canGoBack && navigate(-1)}
+                    disabled={!canGoBack}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all
+                        ${canGoBack ? "hover:bg-[#f0fafa] text-[#2d6b6b]" : "text-[#d0e8e8] cursor-not-allowed"}`}
+                >
+                    <ChevronLeft size={16} />
+                </button>
 
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="px-4 pb-4"
-                        style={{ overflow: "hidden" }}
+                <AnimatePresence mode="wait">
+                    <motion.span
+                        key={`${viewYear}-${viewMonth}`}
+                        initial={{ opacity: 0, x: direction * 16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: direction * -16 }}
+                        transition={{ duration: 0.18 }}
+                        className="text-sm font-bold text-[#1a3d3d]"
+                        style={{ fontFamily: "'DM Serif Display', serif" }}
                     >
-                        <h4 className="font-semibold text-[#0b3d3d] text-sm mb-3">
-                            Personal Details
-                        </h4>
+                        {MONTHS[viewMonth]} {viewYear}
+                    </motion.span>
+                </AnimatePresence>
 
-                        <div className="bg-[#f0fafa] p-3 rounded-lg text-sm mb-4">
-                            {summary.map((row) => (
-                                <p className="flex justify-between py-1 border-b last:border-none" key={row.label}>
-                                    <b>{row.label}:</b> <span>{row.value}</span>
-                                </p>
-                            ))}
-                        </div>
+                <button
+                    onClick={() => canGoForward && navigate(1)}
+                    disabled={!canGoForward}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all
+                        ${canGoForward ? "hover:bg-[#f0fafa] text-[#2d6b6b]" : "text-[#d0e8e8] cursor-not-allowed"}`}
+                >
+                    <ChevronRight size={16} />
+                </button>
+            </div>
 
-                        <h4 className="font-semibold mb-2 text-sm text-[#0b3d3d]">
-                            Selected Services ({selectedServices.length})
-                        </h4>
+            {/* Week header */}
+            <div className="grid grid-cols-7 px-3 pt-3">
+                {WEEK_DAYS.map((d) => (
+                    <div key={d} className="text-center text-[10px] font-bold uppercase tracking-widest text-[#9ab8b8] pb-2">
+                        {d}
+                    </div>
+                ))}
+            </div>
 
-                        {selectedServices.length === 0 ? (
-                            <p className="text-gray-500 text-xs">No services selected.</p>
-                        ) : (
-                            <ul className="space-y-1.5 max-h-32 overflow-y-auto p-3 border rounded-lg bg-white">
-                                {selectedServices.map((id) => (
-                                    <li key={id} className="flex items-start gap-2 text-sm">
-                                        <CheckCircle size={14} className="text-[#5bb9b9]" />
-                                        {idToService[id].label}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </motion.div>
-                )}
+            {/* Days grid */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={`${viewYear}-${viewMonth}-grid`}
+                    initial={{ opacity: 0, x: direction * 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: direction * -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="grid grid-cols-7 gap-0.5 px-3 pb-3"
+                >
+                    {cells.map((d, i) => {
+                        if (!d) return <div key={`empty-${i}`} />;
+                        const past = isBefore(d);
+                        const isTodayD = isSameDay(d, today);
+                        const isSel = isSameDay(d, selected);
+                        const isSun = d.getDay() === 0;
+
+                        return (
+                            <motion.button
+                                key={d.toISOString()}
+                                whileHover={!past ? { scale: 1.08 } : {}}
+                                whileTap={!past ? { scale: 0.94 } : {}}
+                                onClick={() => !past && onSelect(new Date(d))}
+                                disabled={past}
+                                className={`
+                                    relative h-9 w-full rounded-xl text-sm font-semibold transition-all duration-150
+                                    flex flex-col items-center justify-center
+                                    ${isSel
+                                        ? "bg-[#2d6b6b] text-white shadow-md shadow-[#2d6b6b]/25 z-10"
+                                        : isTodayD
+                                            ? "border-2 border-[#5bb9b9] text-[#2d6b6b] bg-[#f0fafa]"
+                                            : past
+                                                ? "text-[#d5e5e5] cursor-not-allowed"
+                                                : isSun
+                                                    ? "text-[#e07070] hover:bg-[#fff4f4]"
+                                                    : "text-[#2a5555] hover:bg-[#f0fafa]"}
+                                `}
+                            >
+                                {d.getDate()}
+                                {isTodayD && !isSel && (
+                                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#5bb9b9]" />
+                                )}
+                            </motion.button>
+                        );
+                    })}
+                </motion.div>
             </AnimatePresence>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 px-5 pb-3 pt-1 border-t border-[#eef4f4]">
+                <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-[#2d6b6b] inline-block" />
+                    <span className="text-[10px] text-[#8ab8b8]">Selected</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full border-2 border-[#5bb9b9] inline-block" />
+                    <span className="text-[10px] text-[#8ab8b8]">Today</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-[#eee] inline-block" />
+                    <span className="text-[10px] text-[#8ab8b8]">Unavailable</span>
+                </div>
+            </div>
         </div>
     );
 };
 
+/* ─────────────────────────────────────────────
+   SMART TIME SLOTS
+───────────────────────────────────────────── */
+const SmartTimeSlots = ({ slot, setSlot, isLimited }) => {
+    const allSlots = isLimited ? ALL_LONG : ALL_SHORT;
+    const groups = groupSlots(allSlots);
+    const [activeG, setActiveG] = useState(groups[0]?.key || "morning");
 
+    // When groups change (limited vs full), reset to first group
+    const currentGroup = groups.find((g) => g.key === activeG) || groups[0];
 
-/* -------------------- MAIN COMPONENT -------------------- */
-/* -------------------- PAGE LOADER -------------------- */
-
-const PageLoader = () => (
-    <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-white/80 backdrop-blur-md flex items-center justify-center z-[9999]"
-    >
-        <div className="flex flex-col items-center gap-6">
-
-            {/* Animated Rings */}
-            <div className="relative flex items-center justify-center">
-
-                <motion.div
-                    animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.6 }}
-                    className="absolute w-20 h-20 rounded-full border-4 border-[#5bb9b9]"
-                />
-
-                <motion.div
-                    animate={{ scale: [1, 1.8], opacity: [0.4, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.6, delay: 0.3 }}
-                    className="absolute w-20 h-20 rounded-full border-4 border-[#619696]"
-                />
-
-                {/* Center Spinner */}
-                <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    className="w-12 h-12 border-4 border-[#619696] border-t-transparent rounded-full"
-                />
+    return (
+        <div className="bg-white rounded-2xl border border-[#e8f2f2] overflow-hidden">
+            {/* Session tabs */}
+            <div className="flex border-b border-[#eef4f4]">
+                {groups.map((g) => {
+                    const Icon = g.icon;
+                    const active = g.key === (currentGroup?.key);
+                    return (
+                        <button
+                            key={g.key}
+                            onClick={() => setActiveG(g.key)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold uppercase tracking-wider transition-all
+                                ${active
+                                    ? "bg-[#f0fafa] text-[#2d6b6b] border-b-2 border-[#5bb9b9]"
+                                    : "text-[#9ab8b8] hover:bg-[#fafefe]"}`}
+                        >
+                            <Icon size={13} />
+                            <span className="hidden sm:inline">{g.label}</span>
+                            <span className="inline sm:hidden">{g.label.slice(0, 3)}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold
+                                ${active ? "bg-[#2d6b6b] text-white" : "bg-[#eef4f4] text-[#9ab8b8]"}`}>
+                                {g.slots.length}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* Animated Text */}
-            <motion.p
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ repeat: Infinity, duration: 1.6 }}
-                className="text-[#0b3d3d] font-semibold text-lg"
-            >
-                Sending Appointment...
-            </motion.p>
+            {/* Slots grid */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentGroup?.key}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="p-4 grid grid-cols-3 sm:grid-cols-4 gap-2"
+                >
+                    {currentGroup?.slots.map((t) => (
+                        <motion.button
+                            key={t.id}
+                            whileHover={{ y: -1 }}
+                            whileTap={{ scale: 0.94 }}
+                            onClick={() => setSlot(t.id)}
+                            className={`py-2.5 px-2 rounded-xl text-sm font-semibold border-2 transition-all
+                                ${slot === t.id
+                                    ? "bg-[#2d6b6b] border-[#2d6b6b] text-white shadow-md shadow-[#2d6b6b]/20"
+                                    : "bg-white border-[#e8f2f2] text-[#3a6060] hover:border-[#aad8d8] hover:bg-[#f4fafa]"}`}
+                        >
+                            {t.label}
+                        </motion.button>
+                    ))}
+                </motion.div>
+            </AnimatePresence>
 
+            {isLimited && (
+                <div className="px-4 pb-3 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <p className="text-[10px] text-amber-600 font-medium">
+                        Slots limited to 4 PM for multiple services
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────────────
+   STEP INDICATOR
+───────────────────────────────────────────── */
+const StepIndicator = ({ step, currentStep, label, icon }) => {
+    const done = currentStep > step, active = currentStep === step;
+    return (
+        <div className="flex flex-col items-center gap-1.5">
+            <motion.div animate={{ scale: active ? 1.1 : 1 }} transition={{ type: "spring", stiffness: 300 }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300
+                    ${done ? "bg-[#2d6b6b] border-[#2d6b6b] text-white"
+                        : active ? "bg-white border-[#2d6b6b] text-[#2d6b6b] shadow-md shadow-[#2d6b6b]/15"
+                            : "bg-white border-[#dde8e8] text-[#aabdbd]"}`}>
+                {done ? <CheckCircle size={16} /> : icon}
+            </motion.div>
+            <span className={`hidden sm:block text-[10px] font-bold tracking-widest uppercase
+                ${active ? "text-[#2d6b6b]" : "text-[#9ab5b5]"}`}>{label}</span>
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────────────
+   PAGE LOADER
+───────────────────────────────────────────── */
+const PageLoader = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center"
+        style={{ background: "rgba(244,249,249,0.96)", backdropFilter: "blur(8px)" }}>
+        <div className="flex flex-col items-center gap-8">
+            <div className="relative flex items-center justify-center">
+                {[0, 0.5, 1].map((delay, i) => (
+                    <motion.div key={i} className="absolute rounded-full border border-[#5ba5a5]/40"
+                        style={{ width: 70 + i * 32, height: 70 + i * 32 }}
+                        animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, delay }} />
+                ))}
+                <motion.img src={loadingLogo} alt="Pure Bliss" className="w-14 h-14 object-contain rounded-full"
+                    animate={{ y: [0, -6, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} />
+            </div>
+            <div className="text-center space-y-1">
+                <motion.p className="text-[#2d5555] font-semibold text-sm tracking-widest uppercase"
+                    animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.8, repeat: Infinity }}>
+                    Confirming appointment
+                </motion.p>
+                <p className="text-[#8aabab] text-xs">Please wait a moment…</p>
+            </div>
         </div>
     </motion.div>
 );
 
+/* ─────────────────────────────────────────────
+   SUCCESS SCREEN
+───────────────────────────────────────────── */
+const SuccessScreen = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center"
+        style={{ background: "rgba(244,249,249,0.96)", backdropFilter: "blur(8px)" }}>
+        <div className="flex flex-col items-center gap-5 text-center px-8">
+            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                className="w-20 h-20 rounded-full bg-gradient-to-br from-[#5bb9b9] to-[#2d6b6b]
+                           flex items-center justify-center shadow-xl shadow-[#2d6b6b]/25">
+                <CheckCircle size={36} className="text-white" strokeWidth={2.5} />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <h2 className="text-2xl font-bold text-[#1a3d3d]" style={{ fontFamily: "'DM Serif Display', serif" }}>
+                    Appointment Confirmed
+                </h2>
+                <p className="text-[#6a9090] text-sm mt-1.5">Redirecting you to WhatsApp…</p>
+            </motion.div>
+        </div>
+    </motion.div>
+);
 
+/* ─────────────────────────────────────────────
+   MOBILE SUMMARY DRAWER
+───────────────────────────────────────────── */
+const MobileSummary = ({ name, phone, date, slotLabel, selectedServices, idToService, step }) => {
+    const [open, setOpen] = useState(false);
+    const show = step >= 2 || name || phone || date || slotLabel || selectedServices.length;
+    if (!show) return null;
+
+    return (
+        <div className="fixed bottom-0 left-0 right-0 md:hidden z-30">
+            <div className="bg-white/90 backdrop-blur-md border-t border-[#ddeaea] shadow-2xl">
+                <button onClick={() => setOpen(!open)} className="flex items-center justify-between w-full px-5 py-3.5">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-2 h-2 rounded-full bg-[#5bb9b9]" />
+                        <span className="text-sm font-semibold text-[#2d5555]">Booking Summary</span>
+                        {selectedServices.length > 0 && (
+                            <span className="bg-[#e8f5f5] text-[#2d6b6b] text-xs font-bold px-2 py-0.5 rounded-full">
+                                {selectedServices.length}
+                            </span>
+                        )}
+                    </div>
+                    <motion.div animate={{ rotate: open ? 180 : 0 }}>
+                        <ChevronDown size={18} className="text-[#5bb9b9]" />
+                    </motion.div>
+                </button>
+                <AnimatePresence>
+                    {open && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }} style={{ overflow: "hidden" }} className="px-5 pb-5">
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                {[
+                                    { label: "Name", value: name || "—" },
+                                    { label: "Phone", value: phone || "—" },
+                                    { label: "Date", value: date ? formatDisplayDate(date) : "—" },
+                                    { label: "Time", value: slotLabel || "—" },
+                                ].map((r) => (
+                                    <div key={r.label} className="bg-[#f4fafa] rounded-xl p-3">
+                                        <p className="text-[10px] text-[#8aabab] uppercase tracking-widest font-semibold">{r.label}</p>
+                                        <p className="text-sm text-[#1a3d3d] font-semibold mt-0.5 truncate">{r.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            {selectedServices.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {selectedServices.map((id) => (
+                                        <span key={id} className="bg-[#e6f5f5] text-[#2d6b6b] text-xs font-medium px-2.5 py-1 rounded-full border border-[#c5e0e0]">
+                                            {idToService[id].label}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────────────
+   FIELD WRAPPER
+───────────────────────────────────────────── */
+const Field = ({ icon: Icon, error, children }) => (
+    <div>
+        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 bg-white transition-all duration-200 group
+            ${error ? "border-red-300 bg-red-50/30" : "border-[#ddeaea] focus-within:border-[#5bb9b9] focus-within:shadow-sm focus-within:shadow-[#5bb9b9]/10"}`}>
+            <Icon size={16} className="text-[#8ab8b8] shrink-0 group-focus-within:text-[#2d6b6b] transition-colors" />
+            {children}
+        </div>
+        {error && <p className="text-red-400 text-xs mt-1.5 ml-1">{error}</p>}
+    </div>
+);
+
+/* ─────────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────────── */
 const Appointment = () => {
     const [step, setStep] = useState(1);
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [selectedServices, setSelectedServices] = useState([]);
     const [date, setDate] = useState(null);
-    const [slot, setSlot] = useState("");
+    const [slot, setSlot] = useState(""); // stores slot id like "10:00"
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
-    /* Dynamically choose short or long time slots */
+    const isLimited = selectedServices.length >= 3;
 
+    // Get human-readable label for selected slot
+    const allSlots = isLimited ? ALL_LONG : ALL_SHORT;
+    const slotObj = allSlots.find((s) => s.id === slot);
+    const slotLabel = slotObj?.label || "—";
 
+    // If switching to limited and slot no longer valid, clear it
+    const validSlot = slot && allSlots.some((s) => s.id === slot) ? slot : "";
 
-
-
-
-
-    const currentSlots = useMemo(() => {
-        if (selectedServices.length >= 3) {
-            if (!LONG_SLOTS.includes(slot)) setSlot("");
-            return LONG_SLOTS;
-        }
-        return SHORT_SLOTS;
-    }, [selectedServices.length, slot]);
-
-    /* Convert service ID → label */
     const idToService = useMemo(() => {
         const map = {};
-        Object.values(SERVICES_DATA)
-            .flat()
-            .forEach((s) => (map[s.id] = s));
+        Object.values(SERVICES_DATA).flat().forEach((s) => (map[s.id] = s));
         return map;
     }, []);
 
-    /* -------------------- VALIDATION -------------------- */
     const validateStep = (s) => {
         const e = {};
-
         if (s === 1) {
             if (!name.trim()) e.name = "Full name is required.";
-            else if (!/^[A-Za-z\s]+$/.test(name)) e.name = "Only alphabets allowed.";
-
+            else if (!/^[A-Za-z\s]+$/.test(name)) e.name = "Only letters are allowed.";
             if (!phone.trim()) e.phone = "Phone number is required.";
-            else if (!/^[0-9]{10}$/.test(phone.trim())) e.phone = "Enter valid 10-digit mobile number.";
+            else if (!/^[0-9]{10}$/.test(phone.trim())) e.phone = "Enter a valid 10-digit number.";
         }
-
-        if (s === 2 && !selectedServices.length)
-            e.services = "Select at least one service.";
-
+        if (s === 2 && !selectedServices.length) e.services = "Please select at least one service.";
         if (s === 3) {
-            if (!date) e.date = "Select a date.";
-            if (!slot) e.slot = "Select a time slot.";
+            if (!date) e.date = "Please select a date.";
+            if (!validSlot) e.slot = "Please select a time slot.";
         }
-
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
-    /* -------------------- SUBMIT -------------------- */
     const handleSubmit = () => {
-        if (!validateStep(3)) {
-            if (!validateStep(1)) setStep(1);
-            else if (!validateStep(2)) setStep(2);
-            return;
-        }
-
+        if (!validateStep(3)) return;
         setLoading(true);
-
         setTimeout(() => {
-            const servicesList = selectedServices
-                .map((id) => `• ${idToService[id].label}`)
-                .join("\n");
-
-            const msg = `
-📅 *New Appointment Request*
-
-👤 *Name:* ${name}
-📞 *Phone:* ${phone}
-
-💆‍♀️ *Services:*
-${servicesList}
-
-🗓️ *Date:* ${formatDisplayDate(date)}
-⏰ *Time:* ${slot} (IST)
-
-——
-Thanks,
-Pure Bliss Skin & Eye Clinic`;
-
-            window.open(
-                `https://wa.me/9922442405?text=${encodeURIComponent(msg)}`,
-                "_blank"
-            );
-
+            const servicesList = selectedServices.map((id) => `• ${idToService[id].label}`).join("\n");
+            const msg = `📅 *New Appointment Request*\n\n👤 *Name:* ${name}\n📞 *Phone:* ${phone}\n\n💆‍♀️ *Services:*\n${servicesList}\n\n🗓️ *Date:* ${formatDisplayDate(date)}\n⏰ *Time:* ${slotLabel} (IST)\n\n——\nPure Bliss Skin & Eye Clinic`;
             setLoading(false);
+            setSuccess(true);
+            setTimeout(() => {
+                window.open(`https://wa.me/9922442405?text=${encodeURIComponent(msg)}`, "_blank");
+                setSuccess(false);
+            }, 1500);
         }, 900);
     };
 
-    /* -------------------- STEP INDICATOR -------------------- */
-    const StepIndicator = ({ step, currentStep, label }) => (
-        <div className="flex items-center gap-2">
-            <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${currentStep === step
-                    ? "bg-[#619696] text-white shadow-lg"
-                    : currentStep > step
-                        ? "bg-[#5bb9b9]/20 text-[#0b3d3d]"
-
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-            >
-                {currentStep > step ? <CheckCircle size={18} /> : step}
-            </div>
-
-            <span
-                className={`hidden sm:inline text-sm font-semibold ${currentStep === step ? "text-[#0b3d3d]" : "text-gray-600"
-                    }`}
-            >
-                {label}
-            </span>
-        </div>
-    );
+    const canSubmit = !loading && date && validSlot && selectedServices.length && name.trim() && phone.trim();
 
     return (
-        <div className="min-h-screen bg-[#f8fbfb] text-[#0b3d3d] pb-20 sm:pb-12 pt-20 sm:pt-24">
+        <div className="min-h-screen bg-[#f4f9f9] text-[#1a3d3d]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
+                ::-webkit-scrollbar { display: none; }
+            `}</style>
 
-            {loading && <PageLoader />}
-            {/* HEADER BANNER */}
-            <div className="max-w-3xl sm:max-w-6xl mx-auto px-3 sm:px-6 mb-10">
-                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl h-44 sm:h-56 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#5bb9b9] to-[#619696]"></div>
+            <AnimatePresence>{loading && <PageLoader />}</AnimatePresence>
+            <AnimatePresence>{success && <SuccessScreen />}</AnimatePresence>
 
-                    <div className="relative z-10 text-center text-white px-6">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="mb-2"
-                        >
-
-                        </motion.div>
-
-                        <motion.h1
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-2xl sm:text-3xl md:text-4xl font-extrabold"
-                        >
-                            Book Your Appointment
-                        </motion.h1>
-
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-1 text-sm md:text-base"
-                        >
-                            Quick & easy 3-step booking process
-                        </motion.p>
+            {/* ── HEADER ── */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8">
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-[#1a3d3d]/10" style={{ minHeight: 190 }}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1a4f4f] via-[#256060] to-[#357575]" />
+                    <div className="absolute inset-0 opacity-[0.05]"
+                        style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "26px 26px" }} />
+                    <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+                    <div className="absolute -left-8 bottom-0 w-60 h-40 rounded-full bg-[#5bb9b9]/8 blur-2xl pointer-events-none" />
+                    <div className="relative z-10 flex items-center justify-between px-8 sm:px-12 py-10 gap-6">
+                        <div>
+                            <p className="text-[#9dd4d4] text-[10px] font-bold tracking-[0.25em] uppercase mb-2">
+                                Pure Bliss Skin &amp; Eye Clinic
+                            </p>
+                            <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight"
+                                style={{ fontFamily: "'DM Serif Display', serif" }}>
+                                Book an Appointment
+                            </h1>
+                            <p className="mt-2 text-[#b8dede] text-sm font-light">
+                                3 simple steps · Takes under 2 minutes
+                            </p>
+                        </div>
+                        <div className="hidden sm:flex flex-col items-center justify-center w-24 h-24 rounded-full shrink-0
+                                        border border-white/15 bg-white/8 backdrop-blur-sm">
+                            <Sparkles size={20} className="text-[#9dd4d4] mb-1" />
+                            <span className="text-white text-[10px] font-semibold text-center leading-snug tracking-wide uppercase">
+                                Premium<br />Care
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* MAIN GRID */}
-            <div className="max-w-lg sm:max-w-5xl mx-auto px-3 sm:px-6 pb-44 sm:pb-28 md:pb-12">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+            {/* ── BODY ── */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-36 md:pb-16">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                    {/* LEFT SIDE FORM */}
-                    <div className="md:col-span-2 bg-white shadow-xl border rounded-2xl p-4 sm:p-6 md:p-8">
+                    {/* ── FORM PANEL ── */}
+                    <div className="md:col-span-2">
+                        <div className="bg-white rounded-3xl shadow-xl shadow-[#1a3d3d]/6 border border-[#e8f2f2] p-6 sm:p-8">
 
-                        {/* Step Indicators */}
-                        <div className="flex items-center justify-between mb-8 pb-5 border-b">
-                            <StepIndicator step={1} currentStep={step} label="Details" />
-                            <div className={`flex-1 h-0.5 mx-2 ${step > 1 ? "bg-[#5bb9b9]" : "bg-gray-200"}`} />
-                            <StepIndicator step={2} currentStep={step} label="Services" />
-                            <div className={`flex-1 h-0.5 mx-2 ${step > 2 ? "bg-[#5bb9b9]" : "bg-gray-200"}`} />
-                            <StepIndicator step={3} currentStep={step} label="Confirm" />
-                        </div>
+                            {/* Step progress */}
+                            <div className="flex items-center mb-8 pb-6 border-b border-[#eef4f4]">
+                                <StepIndicator step={1} currentStep={step} label="Details" icon={<User size={14} />} />
+                                <div className="flex-1 mx-2 h-px relative overflow-hidden rounded-full bg-[#e8f2f2]">
+                                    <motion.div className="absolute inset-y-0 left-0 bg-[#5bb9b9] rounded-full"
+                                        animate={{ width: step > 1 ? "100%" : "0%" }} transition={{ duration: 0.4 }} />
+                                </div>
+                                <StepIndicator step={2} currentStep={step} label="Services" icon={<Sparkles size={14} />} />
+                                <div className="flex-1 mx-2 h-px relative overflow-hidden rounded-full bg-[#e8f2f2]">
+                                    <motion.div className="absolute inset-y-0 left-0 bg-[#5bb9b9] rounded-full"
+                                        animate={{ width: step > 2 ? "100%" : "0%" }} transition={{ duration: 0.4 }} />
+                                </div>
+                                <StepIndicator step={3} currentStep={step} label="Schedule" icon={<CalendarDays size={14} />} />
+                            </div>
 
-                        <AnimatePresence mode="wait">
-                            {/* -------------------- STEP 1 -------------------- */}
-                            {step === 1 && (
-                                <motion.div
-                                    key="step1"
-                                    initial={{ opacity: 0, x: 30 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -30 }}
-                                >
-                                    <h2 className="text-lg sm:text-xl font-bold mb-6 text-[#619696]">
-                                        Your Information
-                                    </h2>
+                            <AnimatePresence mode="wait">
 
-                                    <div className="space-y-6">
-                                        {/* Name */}
-                                        <div className="relative">
-                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                {/* ── STEP 1 ── */}
+                                {step === 1 && (
+                                    <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.22 }}>
+                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#8ab8b8] mb-1">Step 1 of 3</p>
+                                        <h2 className="text-xl font-bold text-[#1a3d3d] mb-6" style={{ fontFamily: "'DM Serif Display', serif" }}>
+                                            Your Information
+                                        </h2>
+                                        <div className="space-y-4">
+                                            <Field icon={User} error={errors.name}>
+                                                <input value={name} maxLength={50}
+                                                    onChange={(e) => setName(e.target.value.replace(/[^A-Za-z\s]/g, ""))}
+                                                    placeholder="Full Name"
+                                                    className="flex-1 outline-none text-sm bg-transparent text-[#1a3d3d] placeholder-[#b0cccc]" />
+                                            </Field>
+                                            <Field icon={Phone} error={errors.phone}>
+                                                <input type="tel" maxLength={10} value={phone}
+                                                    onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                                                    placeholder="10-digit Mobile Number"
+                                                    className="flex-1 outline-none text-sm bg-transparent text-[#1a3d3d] placeholder-[#b0cccc]" />
+                                            </Field>
+                                        </div>
+                                        <button onClick={() => validateStep(1) && setStep(2)}
+                                            className="mt-8 w-full sm:w-auto bg-[#2d6b6b] hover:bg-[#245858] text-white
+                                                       px-10 py-3.5 rounded-2xl font-semibold text-sm tracking-wide
+                                                       shadow-lg shadow-[#2d6b6b]/20 transition-all duration-200
+                                                       hover:shadow-xl hover:shadow-[#2d6b6b]/30 hover:-translate-y-0.5">
+                                            Continue →
+                                        </button>
+                                    </motion.div>
+                                )}
 
-                                            <input
-                                                value={name}
-                                                maxLength={50}
-                                                onChange={(e) => setName(e.target.value.replace(/[^A-Za-z\s]/g, ""))}
-                                                placeholder="Full Name"
-                                                className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 ${errors.name
-                                                    ? "border-red-400"
-                                                    : "border-gray-200 focus:border-[#619696]"
-                                                    }`}
-                                            />
-                                            {errors.name && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                                {/* ── STEP 2 ── */}
+                                {step === 2 && (
+                                    <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.22 }}>
+                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#8ab8b8] mb-1">Step 2 of 3</p>
+                                        <h2 className="text-xl font-bold text-[#1a3d3d] mb-1" style={{ fontFamily: "'DM Serif Display', serif" }}>
+                                            Select Services
+                                        </h2>
+                                        <p className="text-[#8aabab] text-xs mb-6">
+                                            Choose one or more treatments. Selecting 3+ services limits available time slots.
+                                        </p>
+                                        <div className="space-y-5">
+                                            {Object.entries(SERVICES_DATA).map(([group, items]) => (
+                                                <div key={group}>
+                                                    <div className="flex items-center gap-2 mb-2.5">
+                                                        <span className="text-[#5bb9b9] text-xs">{CATEGORY_ICON[group]}</span>
+                                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#5a8888]">{group}</h3>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        {items.map((s) => {
+                                                            const checked = selectedServices.includes(s.id);
+                                                            return (
+                                                                <motion.label key={s.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                                                                    className={`flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer border-2 transition-all duration-150 text-sm
+                                                                        ${checked ? "border-[#5bb9b9] bg-[#edf8f8] text-[#1a4848]" : "border-[#eef4f4] bg-[#fafefe] text-[#4a7070] hover:border-[#aad8d8]"}`}>
+                                                                    <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center shrink-0 transition-all
+                                                                        ${checked ? "bg-[#5bb9b9] border-[#5bb9b9]" : "border-[#c5dede]"}`}>
+                                                                        {checked && <CheckCircle size={10} className="text-white" strokeWidth={3} />}
+                                                                    </div>
+                                                                    <input type="checkbox" className="sr-only" checked={checked}
+                                                                        onChange={() =>
+                                                                            setSelectedServices((prev) =>
+                                                                                checked ? prev.filter((x) => x !== s.id) : [...prev, s.id]
+                                                                            )
+                                                                        } />
+                                                                    <span className="font-medium leading-tight">{s.label}</span>
+                                                                </motion.label>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {errors.services && <p className="text-red-400 text-xs mt-4 ml-1">{errors.services}</p>}
+                                        <div className="flex gap-3 mt-8">
+                                            <button onClick={() => setStep(1)}
+                                                className="px-6 py-3.5 rounded-2xl border-2 border-[#ddeaea] text-[#4a7070] text-sm font-semibold hover:bg-[#f4fafa] transition-colors">
+                                                ← Back
+                                            </button>
+                                            <button onClick={() => validateStep(2) && setStep(3)}
+                                                className="flex-1 sm:flex-none bg-[#2d6b6b] hover:bg-[#245858] text-white px-10 py-3.5 rounded-2xl font-semibold text-sm tracking-wide shadow-lg shadow-[#2d6b6b]/20 transition-all duration-200 hover:-translate-y-0.5">
+                                                Continue →
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {/* ── STEP 3 ── */}
+                                {step === 3 && (
+                                    <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.22 }}>
+                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#8ab8b8] mb-1">Step 3 of 3</p>
+                                        <h2 className="text-xl font-bold text-[#1a3d3d] mb-6" style={{ fontFamily: "'DM Serif Display', serif" }}>
+                                            Choose Date &amp; Time
+                                        </h2>
+
+                                        {/* CALENDAR */}
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <CalendarDays size={14} className="text-[#5bb9b9]" />
+                                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#5a8888]">Select Date</h4>
+                                            {date && (
+                                                <span className="ml-auto text-xs font-semibold text-[#2d6b6b] bg-[#edf8f8] px-2.5 py-0.5 rounded-full border border-[#c5e5e5]">
+                                                    {formatDisplayDate(date)}
+                                                </span>
                                             )}
                                         </div>
+                                        <SmartCalendar selected={date} onSelect={(d) => { setDate(d); }} />
+                                        {errors.date && <p className="text-red-400 text-xs mt-2 ml-1">{errors.date}</p>}
 
-                                        {/* Phone */}
-                                        <div className="relative">
-                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-
-                                            <input
-                                                type="tel"
-                                                maxLength={10}
-                                                value={phone}
-                                                onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                                                placeholder="10-digit Phone Number"
-                                                className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 ${errors.phone
-                                                    ? "border-red-400"
-                                                    : "border-gray-200 focus:border-[#619696]"
-                                                    }`}
-                                            />
-                                            {errors.phone && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                                        {/* TIME SLOTS */}
+                                        <div className="flex items-center gap-2 mt-6 mb-3">
+                                            <Clock size={14} className="text-[#5bb9b9]" />
+                                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#5a8888]">Select Time</h4>
+                                            {validSlot && slotObj && (
+                                                <span className="ml-auto text-xs font-semibold text-[#2d6b6b] bg-[#edf8f8] px-2.5 py-0.5 rounded-full border border-[#c5e5e5]">
+                                                    {slotObj.label}
+                                                </span>
                                             )}
+                                        </div>
+                                        <SmartTimeSlots slot={validSlot} setSlot={setSlot} isLimited={isLimited} />
+                                        {errors.slot && <p className="text-red-400 text-xs mt-2 ml-1">{errors.slot}</p>}
+
+                                        {/* BUTTONS */}
+                                        <div className="flex gap-3 mt-8">
+                                            <button onClick={() => setStep(2)}
+                                                className="px-6 py-3.5 rounded-2xl border-2 border-[#ddeaea] text-[#4a7070] text-sm font-semibold hover:bg-[#f4fafa] transition-colors">
+                                                ← Back
+                                            </button>
+                                            <motion.button onClick={handleSubmit} disabled={!canSubmit}
+                                                whileHover={canSubmit ? { y: -2 } : {}} whileTap={canSubmit ? { scale: 0.97 } : {}}
+                                                className={`flex-1 sm:flex-none px-8 py-3.5 rounded-2xl font-semibold text-sm
+                                                    flex items-center justify-center gap-2.5 transition-all duration-200
+                                                    ${canSubmit
+                                                        ? "bg-[#2d6b6b] text-white shadow-lg shadow-[#2d6b6b]/25 hover:bg-[#245858] hover:shadow-xl hover:shadow-[#2d6b6b]/30"
+                                                        : "bg-[#ddeaea] text-[#8ab0b0] cursor-not-allowed"}`}>
+                                                {loading ? (
+                                                    <><Loader2 size={16} className="animate-spin" /><span>Sending…</span></>
+                                                ) : (
+                                                    <>
+                                                        <span className="hidden sm:inline">Confirm &amp; Send via WhatsApp</span>
+                                                        <span className="sm:hidden">Confirm Booking</span>
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+
+                    {/* ── SIDEBAR ── */}
+                    <aside className="hidden md:flex flex-col gap-4">
+                        <div className="bg-white rounded-3xl border border-[#e8f2f2] shadow-xl shadow-[#1a3d3d]/5 p-6">
+                            <h3 className="text-base font-bold text-[#1a3d3d] mb-4 pb-3 border-b border-[#eef4f4]"
+                                style={{ fontFamily: "'DM Serif Display', serif" }}>
+                                Booking Summary
+                            </h3>
+                            <div className="space-y-1.5 mb-5">
+                                {[
+                                    { label: "Name", value: name || "—", icon: User },
+                                    { label: "Phone", value: phone || "—", icon: Phone },
+                                    { label: "Date", value: date ? formatDisplayDate(date) : "—", icon: CalendarDays },
+                                    { label: "Time", value: (validSlot && slotObj?.label) || "—", icon: Clock },
+                                ].map(({ label, value, icon: Icon }) => (
+                                    <div key={label} className="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-[#f4fafa] transition-colors">
+                                        <div className="w-7 h-7 rounded-lg bg-[#edf8f8] flex items-center justify-center shrink-0">
+                                            <Icon size={13} className="text-[#5bb9b9]" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-[10px] text-[#9ab8b8] uppercase tracking-wider font-semibold">{label}</p>
+                                            <p className="text-sm text-[#1a3d3d] font-semibold truncate">{value}</p>
                                         </div>
                                     </div>
-
-                                    <button
-                                        onClick={() => validateStep(1) && setStep(2)}
-                                        className="mt-8 bg-[#619696] hover:bg-[#5bb9b9] text-white px-8 py-3 rounded-xl font-semibold shadow-md"
-                                    >
-                                        Next Step
-                                    </button>
-                                </motion.div>
-                            )}
-
-                            {/* -------------------- STEP 2 -------------------- */}
-                            {step === 2 && (
-                                <motion.div
-                                    key="step2"
-                                    initial={{ opacity: 0, x: 30 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -30 }}
-                                >
-                                    <h2 className="text-lg sm:text-xl font-bold mb-6 text-[#619696]">
-                                        Select Services
-                                    </h2>
-
-                                    <div className="space-y-6">
-                                        {Object.entries(SERVICES_DATA).map(([group, items]) => (
-                                            <div
-                                                key={group}
-                                                className="border border-[#e0f1f1] p-5 rounded-xl bg-[#fbffff]"
-                                            >
-                                                <h3 className="font-bold mb-3 text-lg border-b pb-2 border-[#5bb9b9]/40">
-                                                    {group}
-                                                </h3>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                    {items.map((s) => {
-                                                        const checked = selectedServices.includes(s.id);
-                                                        return (
-                                                            <label
-                                                                key={s.id}
-                                                                className={`flex items-center gap-3 border-2 p-3 rounded-lg cursor-pointer text-sm transition-all ${checked
-                                                                    ? "bg-[#e6fffb] border-[#5bb9b9]"
-                                                                    : "bg-white border-gray-200 hover:border-[#5bb9b9]/50"
-                                                                    }`}
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={checked}
-                                                                    onChange={() =>
-                                                                        setSelectedServices((prev) =>
-                                                                            checked
-                                                                                ? prev.filter((x) => x !== s.id)
-                                                                                : [...prev, s.id]
-                                                                        )
-                                                                    }
-                                                                />
-                                                                {s.label}
-                                                            </label>
-                                                        );
-                                                    })}
-                                                </div>
+                                ))}
+                            </div>
+                            <div className="border-t border-[#eef4f4] pt-4">
+                                <p className="text-[10px] text-[#9ab8b8] uppercase tracking-wider font-semibold mb-3">
+                                    Services ({selectedServices.length})
+                                </p>
+                                {selectedServices.length === 0 ? (
+                                    <div className="text-center py-5">
+                                        <Sparkles size={18} className="text-[#c8e0e0] mx-auto mb-2" />
+                                        <p className="text-[#b0cccc] text-xs">No services selected yet</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                                        {selectedServices.map((id) => (
+                                            <div key={id} className="flex items-center gap-2 bg-[#edf8f8] rounded-xl px-3 py-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#5bb9b9] shrink-0" />
+                                                <span className="text-xs text-[#2a5858] font-medium leading-tight">{idToService[id].label}</span>
                                             </div>
                                         ))}
                                     </div>
-
-                                    {errors.services && (
-                                        <p className="text-red-500 text-sm mt-4">{errors.services}</p>
-                                    )}
-
-                                    <div className="flex justify-between mt-8">
-                                        <button
-                                            onClick={() => setStep(1)}
-                                            className="border px-6 py-3 rounded-xl font-medium"
-                                        >
-                                            Back
-                                        </button>
-
-                                        <button
-                                            onClick={() => validateStep(2) && setStep(3)}
-                                            className="bg-[#619696] hover:bg-[#5bb9b9] text-white px-8 py-3 rounded-xl font-semibold shadow-md"
-                                        >
-                                            Next Step
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                            {/* -------------------- STEP 3 -------------------- */}
-                            {step === 3 && (
-                                <motion.div
-                                    key="step3"
-                                    initial={{ opacity: 0, x: 30 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -30 }}
-                                >
-                                    <h2 className="text-lg sm:text-xl font-bold mb-6 text-[#619696]">
-                                        Pick Date & Time
-                                    </h2>
-
-                                    {/* DATE */}
-                                    <h4 className="mb-3 font-semibold text-gray-700">Select Date</h4>
-
-                                    <HorizontalDateCarousel
-                                        selected={date}
-                                        onSelect={(d) => {
-                                            const c = new Date(d);
-                                            c.setHours(0, 0, 0, 0);
-                                            setDate(c);
-                                        }}
-                                    />
-
-                                    {errors.date && (
-                                        <p className="text-red-500 text-sm mt-2">{errors.date}</p>
-                                    )}
-
-                                    {/* TIME */}
-                                    <h4 className="mt-6 mb-3 font-semibold text-gray-700">
-                                        Available Time Slots
-                                        {currentSlots === LONG_SLOTS && (
-                                            <span className="text-red-500 text-xs ml-2">
-                                                (Limited due to multiple services)
-                                            </span>
-                                        )}
-                                    </h4>
-
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                                        {currentSlots.map((t) => (
-                                            <button
-                                                key={t}
-                                                onClick={() => setSlot(t)}
-                                                className={`py-3 px-3 border-2 rounded-xl transition-all font-medium ${slot === t
-                                                    ? "bg-[#619696] border-[#619696] text-white shadow-md scale-[1.02]"
-                                                    : "bg-white border-gray-200 hover:border-[#5bb9b9]"
-                                                    }`}
-                                            >
-                                                {t}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {errors.slot && (
-                                        <p className="text-red-500 text-sm mt-2">{errors.slot}</p>
-                                    )}
-
-                                    {/* BUTTONS */}
-                                    <div className="flex justify-between mt-8 flex-wrap gap-3">
-                                        <button
-                                            onClick={() => setStep(2)}
-                                            className="border px-6 py-3 rounded-xl font-medium hover:bg-gray-50"
-                                        >
-                                            Back
-                                        </button>
-
-                                        <button
-                                            onClick={handleSubmit}
-                                            disabled={
-                                                loading ||
-                                                !date ||
-                                                !slot ||
-                                                !selectedServices.length ||
-                                                !name.trim() ||
-                                                !phone.trim()
-                                            }
-                                            className={`px-8 py-3 rounded-xl shadow-lg font-semibold flex items-center justify-center gap-2 transition-all ${loading ||
-                                                !date ||
-                                                !slot ||
-                                                !selectedServices.length ||
-                                                !name.trim() ||
-                                                !phone.trim()
-                                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                                : "bg-[#619696] text-white hover:bg-[#5bb9b9]"
-                                                }`}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="animate-spin w-5 h-5" />
-                                                    <span>Sending...</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className="hidden md:inline">
-                                                        Confirm & Send via WhatsApp
-                                                    </span>
-                                                    <span className="md:hidden">Confirm & Send</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* -------------------- DESKTOP BOOKING SUMMARY -------------------- */}
-                    <aside className="hidden md:block bg-white p-6 rounded-2xl shadow-xl border h-fit sticky top-8 transform transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                        <h3 className="text-2xl font-extrabold mb-5 text-[#0b3d3d]">
-                            Booking Summary
-                        </h3>
-
-                        {/* SERVICES */}
-                        <h4 className="font-bold mb-2 text-[#619696] text-sm uppercase tracking-wider">
-                            Selected Services ({selectedServices.length})
-                        </h4>
-
-                        {selectedServices.length === 0 ? (
-                            <div className="p-4 bg-[#f0fafa] rounded-xl border text-gray-600 text-sm">
-                                Please choose your treatments in Step 2
+                                )}
                             </div>
-                        ) : (
-                            <ul className="space-y-3 max-h-56 overflow-y-auto pr-2">
-                                {selectedServices.map((id) => (
-                                    <li
-                                        key={id}
-                                        className="p-3 bg-[#fbffff] border-2 border-[#e6fffb] rounded-xl shadow-sm flex items-start gap-2"
-                                    >
-                                        <CheckCircle
-                                            size={18}
-                                            className="text-[#619696] mt-1 flex-shrink-0"
-                                        />
-                                        <span className="font-medium text-sm">
-                                            {idToService[id].label}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
-                        {/* PERSONAL DETAILS */}
-                        <div className="mt-6 border-t pt-6 space-y-3 text-sm">
-                            <h4 className="font-bold text-[#619696] uppercase tracking-wider text-xs">
-                                Personal Details
-                            </h4>
-
-                            <p className="flex justify-between border-b pb-2">
-                                <b className="text-gray-700">Name:</b>
-                                <span className="font-semibold">{name || "—"}</span>
-                            </p>
-
-                            <p className="flex justify-between border-b pb-2">
-                                <b className="text-gray-700">Phone:</b>
-                                <span className="font-semibold">{phone || "—"}</span>
-                            </p>
-
-                            <p className="flex justify-between border-b pb-2">
-                                <b className="text-gray-700">Date:</b>
-                                <span className="font-semibold">
-                                    {date ? formatDisplayDate(date) : "—"}
-                                </span>
-                            </p>
-
-                            <p className="flex justify-between">
-                                <b className="text-gray-700">Time:</b>
-                                <span className="font-extrabold text-[#619696]">
-                                    {slot || "—"}
-                                </span>
-                            </p>
+                        </div>
+                        <div className="relative rounded-2xl overflow-hidden p-5">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#1a4f4f] to-[#2a6868]" />
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-bold tracking-widest uppercase text-[#9dd4d4] mb-2">Good to know</p>
+                                <p className="text-xs text-[#cde8e8] leading-relaxed">
+                                    After confirming, you'll be taken to WhatsApp to complete your booking with our team.
+                                </p>
+                            </div>
                         </div>
                     </aside>
                 </div>
             </div>
 
-            {/* -------------------- MOBILE SUMMARY (BOTTOM DRAWER) -------------------- */}
+            {/* ── MOBILE SUMMARY ── */}
             <MobileSummary
-                name={name}
-                phone={phone}
-                date={date}
-                slot={slot}
-                selectedServices={selectedServices}
-                idToService={idToService}
-                step={step}
+                name={name} phone={phone} date={date} slotLabel={slotLabel}
+                selectedServices={selectedServices} idToService={idToService} step={step}
             />
         </div>
-
-
-
-
-
     );
 };
 

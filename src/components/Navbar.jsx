@@ -1,391 +1,425 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaBars, FaTimes } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Globe, Menu, X, Calendar } from "lucide-react";
 import logoFull from "../assets/NewLogo3.png";
 
-/* =========================================================
-   CLEAN + SINGLE GOOGLE TRANSLATE FUNCTION
-========================================================= */
+// Google Translate
 const translateToLang = (langCode) => {
-  const interval = setInterval(() => {
-    const select = document.querySelector(".goog-te-combo");
-
-    if (select) {
-      select.value = langCode;
-      select.dispatchEvent(new Event("change"));
-      clearInterval(interval);
-    }
+  const id = setInterval(() => {
+    const sel = document.querySelector(".goog-te-combo");
+    if (sel) { sel.value = langCode; sel.dispatchEvent(new Event("change")); clearInterval(id); }
   }, 200);
 };
 
-const PRIMARY_COLOR = "#619696";
-const HOVER_COLOR = "#4d7777";
+const NAV_LINKS = [
+  { label: "Home", to: "/" },
+  { label: "About", to: "/about" },
+  { label: "Contact", to: "/contact" },
+];
+
+const SERVICES = [
+  { label: "Skin Care", to: "/skincare", tag: "Rejuvenation" },
+  { label: "Hair Care", to: "/haircare", tag: "Restoration" },
+  { label: "Eye Care", to: "/eyecare", tag: "Aesthetics" },
+  { label: "Permanent Makeup", to: "/makeup", tag: "Micropigmentation" },
+];
+
+const LANGUAGES = [
+  { label: "English", code: "en", flag: "🇬🇧" },
+  { label: "Hindi", code: "hi", flag: "🇮🇳" },
+  { label: "Marathi", code: "mr", flag: "🇮🇳" },
+];
+
+// Services Dropdown
+const ServicesDropdown = ({ onSelect }) => (
+  <motion.div
+    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+    transition={{ duration: 0.25, ease: "easeOut" }}
+    className="absolute top-[calc(100%+12px)] left-1/2 -translate-x-1/2 z-50 w-72 rounded-2xl overflow-hidden border shadow-lg"
+    style={{
+      background: "rgba(255, 255, 255, 0.95)",
+      backdropFilter: "blur(20px)",
+      boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.1)"
+    }}
+  >
+    <div className="h-1 w-full bg-gradient-to-r from-[#3A5A5A]/50 via-[#4A6B6B]/50 to-[#1f3f3f]/50" />
+
+    <div className="p-4 space-y-1">
+      {SERVICES.map((s, i) => (
+        <motion.button
+          key={s.to}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.06 }}
+          onClick={() => onSelect(s.to)}
+          className="group w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[#e6f2f2]/50 transition-all duration-200 text-left border border-[#e6f2f2] hover:border-[#3A5A5A]/30"
+        >
+          <span className="text-sm font-medium text-gray-800 group-hover:text-gray-900">
+            {s.label}
+          </span>
+
+          <span className="text-xs font-semibold uppercase tracking-wide text-[#3A5A5A] bg-[#e6f2f2] group-hover:bg-[#d9eeee] px-3 py-1 rounded-full">
+            {s.tag}
+          </span>
+        </motion.button>
+      ))}
+    </div>
+  </motion.div>
+);
+// Lang Dropdown
+const LangDropdown = ({ onSelect }) => (
+  <motion.div
+    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+    transition={{ duration: 0.25, ease: "easeOut" }}
+    className="absolute top-[calc(100%+12px)] left-1/2 -translate-x-1/2 z-50 w-48 rounded-2xl overflow-hidden border shadow-lg"
+    style={{
+      background: "rgba(255, 255, 255, 0.95)",
+      backdropFilter: "blur(20px)",
+      boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.1)"
+    }}
+  >
+    <div className="h-1 w-full bg-gradient-to-r from-[#3A5A5A]/50 via-[#4A6B6B]/50 to-[#1f3f3f]/50" />
+
+    <div className="p-3 space-y-1">
+      {LANGUAGES.map((l, i) => (
+        <motion.button
+          key={l.code}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.06 }}
+          onClick={() => onSelect(l.code)}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#e6f2f2]/50 transition-all duration-200 text-sm font-medium text-gray-800 hover:text-gray-900 border border-[#e6f2f2] hover:border-[#3A5A5A]/30"
+        >
+          <span className="text-lg">{l.flag}</span>
+          <span>{l.label}</span>
+        </motion.button>
+      ))}
+    </div>
+  </motion.div>
+);
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const [desktopServicesOpen, setDesktopServicesOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
-
-  const [desktopLangOpen, setDesktopLangOpen] = useState(false);
-  const [mobileLangOpen, setMobileLangOpen] = useState(false);
-
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const servicesRef = useRef(null);
-  const desktopLangRef = useRef(null);
-
+  const langRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  /* Close all dropdowns */
-  const closeMenu = () => {
+  const closeAll = () => {
     setMenuOpen(false);
-    setDesktopServicesOpen(false);
+    setServicesOpen(false);
+    setLangOpen(false);
     setMobileServicesOpen(false);
-    setDesktopLangOpen(false);
-    setMobileLangOpen(false);
   };
 
-  /* Navigate + close menu */
-  const navigateService = (path) => {
+  const go = (path) => {
     navigate(path);
-    closeMenu();
+    closeAll();
   };
 
-  /* Disable scroll when sidebar open */
+  const isActive = (to) => location.pathname === to;
+
+  // Effects
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "auto";
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  /* Navbar shrink on scroll */
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
-
-    return () => window.removeEventListener("scroll", onScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* Click outside (desktop) */
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (servicesRef.current && !servicesRef.current.contains(e.target)) {
-        setDesktopServicesOpen(false);
-      }
-      if (desktopLangRef.current && !desktopLangRef.current.contains(e.target)) {
-        setDesktopLangOpen(false);
-      }
+      if (servicesRef.current && !servicesRef.current.contains(e.target)) setServicesOpen(false);
+      if (langRef.current && !langRef.current.contains(e.target)) setLangOpen(false);
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => closeAll(), [location.pathname]);
+
+  const navStyle = scrolled
+    ? {
+      background: "rgba(255, 255, 255, 0.95)",
+      borderBottomColor: "rgba(244, 63, 94, 0.15)",
+      padding: "12px 0",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.08)"
+    }
+    : {
+      background: "rgba(255, 255, 255, 0.92)",
+      borderBottomColor: "rgba(0, 0, 0, 0.05)",
+      padding: "20px 0",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.04)"
+    };
+
   return (
-    <nav
-      className={`fixed top-0 w-full bg-white z-50 transition-all duration-300 ${isScrolled ? "shadow-md border-b py-3" : "py-5"
-        }`}
-    >
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6">
-        {/* LOGO */}
-        <Link to="/" onClick={closeMenu}>
-          <motion.img
-            src={logoFull}
-            alt="logo"
-            className="h-10 md:h-12"
-            whileHover={{ scale: 1.05 }}
-          />
-        </Link>
+    <>
+      <style>{`
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-        {/* DESKTOP MENU */}
-        <ul className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
-          <li>
-            <Link to="/" className="nav-underline">
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link to="/about" className="nav-underline">
-              About
-            </Link>
-          </li>
-          <li>
-            <Link to="/contact" className="nav-underline">
-              Contact
-            </Link>
-          </li>
+  .nb { font-family: 'Inter', sans-serif; }
 
-          {/* DESKTOP SERVICES */}
-          <li ref={servicesRef} className="relative">
-            <button
-              onClick={() => setDesktopServicesOpen((v) => !v)}
-              className="flex items-center gap-2 nav-underline"
-            >
-              Services <span>{desktopServicesOpen ? "▲" : "▼"}</span>
-            </button>
+  .nav-link {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #374151;
+  }
 
-            <AnimatePresence>
-              {desktopServicesOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="dropdown-panel absolute left-1/2 -translate-x-1/2 mt-3 z-50"
-                >
-                  <button
-                    onClick={() => navigateService("/skincare")}
-                    className="dropdown-item"
-                  >
-                    Skin Care
-                  </button>
-                  <button
-                    onClick={() => navigateService("/haircare")}
-                    className="dropdown-item"
-                  >
-                    Hair Care
-                  </button>
-                  <button
-                    onClick={() => navigateService("/eyecare")}
-                    className="dropdown-item"
-                  >
-                    Eye Care
-                  </button>
-                  <button
-                    onClick={() => navigateService("/makeup")}
-                    className="dropdown-item"
-                  >
-                    Semi-Permanent Makeup
-                  </button>
-                </motion.div>
+  /* ✅ GREEN UNDERLINE ANIMATION */
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    right: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, #3A5A5A, #1f3f3f);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 1px;
+  }
+
+  .nav-link:hover::after,
+  .nav-link.active::after {
+    left: 0;
+    right: 0;
+  }
+
+  /* ✅ GREEN ACTIVE TEXT */
+  .nav-link.active {
+    color: #3A5A5A !important;
+    font-weight: 600;
+  }
+`}</style>
+
+      <motion.nav
+        className="nb fixed top-0 w-full z-50 border-b"
+        style={{
+          ...navStyle,
+          backdropFilter: "saturate(180%) blur(20px)",
+        }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" onClick={closeAll} className="flex-shrink-0">
+            <motion.img
+              src={logoFull}
+              alt="Pure Bliss Clinic"
+              className="h-10 lg:h-12 object-contain"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ duration: 0.25 }}
+            />
+          </Link>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-2">
+            {NAV_LINKS.map(({ label, to }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`nav-link px-6 py-3 text-sm font-medium hover:text-gray-900 ${isActive(to) ? 'active' : ''}`}
+              >
+                {label}
+              </Link>
+            ))}
+
+            {/* Services Dropdown */}
+            <div ref={servicesRef} className="relative">
+              <button
+                onClick={() => { setServicesOpen(v => !v); setLangOpen(false); }}
+                className={`nav-link flex items-center gap-1 px-6 py-3 text-sm font-medium hover:text-gray-900 ${servicesOpen ? 'active' : ''}`}
+              >
+                Services
+                <motion.span animate={{ rotate: servicesOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                  <ChevronDown size={14} />
+                </motion.span>
+              </button>
+              <AnimatePresence>
+                {servicesOpen && <ServicesDropdown onSelect={go} />}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Desktop Right */}
+          <div className="hidden md:flex items-center gap-4">
+            <motion.button
+              onClick={() => go("/appointment")}
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className="group flex items-center gap-2 bg-gradient-to-r from-[#3A5A5A]/90 to-[#1f3f3f]/90 hover:from-[#2f4a4a] hover:to-[#163535] text-white text-sm font-semibold uppercase tracking-wide px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-[#3A5A5A]/40"            >
+              <Calendar size={18} />
+              <span>Book Now</span>
+            </motion.button>
+
+            <div ref={langRef} className="relative">
+              <button
+                onClick={() => { setLangOpen(v => !v); setServicesOpen(false); }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 border border-gray-200 hover:border-[#3A5A5A]/40
+  ${langOpen
+                    ? "bg-[#e6f2f2] border-[#3A5A5A]/40 shadow-sm text-[#2f4a4a]"
+                    : "text-gray-700 hover:bg-[#e6f2f2]/50 hover:shadow-sm"}`}
+                aria-expanded={langOpen}
+              >
+                <Globe size={16} />
+                <span>EN</span>
+                <motion.span animate={{ rotate: langOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                  <ChevronDown size={14} />
+                </motion.span>
+              </button>
+              <AnimatePresence>{langOpen && <LangDropdown onSelect={(code) => { translateToLang(code); setLangOpen(false); }} />}</AnimatePresence>
+            </div>
+          </div>
+
+          {/* Mobile Button */}
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="md:hidden p-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-[#e6f2f2] hover:border-[#3A5A5A]/40 transition-all duration-200 shadow-sm"
+            aria-label="Toggle menu"
+          >
+            <AnimatePresence mode="wait">
+              {menuOpen ? (
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                  <X size={20} />
+                </motion.span>
+              ) : (
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                  <Menu size={20} />
+                </motion.span>
               )}
             </AnimatePresence>
-          </li>
-        </ul>
-
-        {/* DESKTOP LANGUAGE + CTA */}
-        <div
-          ref={desktopLangRef}
-          className="hidden md:flex items-center gap-6 relative"
-        >
-          <button
-            onClick={() => setDesktopLangOpen((v) => !v)}
-            className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2"
-          >
-            <span className="nav-underline">🌐 Translate</span>
-            <span>{desktopLangOpen ? "▲" : "▼"}</span>
           </button>
-
-          {desktopLangOpen && (
-            <div className="dropdown-panel absolute top-12 left-0 z-50">
-              <button
-                onClick={() => {
-                  translateToLang("en");
-                  setDesktopLangOpen(false);
-                }}
-                className="lang-item"
-              >
-                🇬🇧 English
-              </button>
-              <button
-                onClick={() => {
-                  translateToLang("hi");
-                  setDesktopLangOpen(false);
-                }}
-                className="lang-item"
-              >
-                🇮🇳 Hindi
-              </button>
-              <button
-                onClick={() => {
-                  translateToLang("mr");
-                  setDesktopLangOpen(false);
-                }}
-                className="lang-item"
-              >
-                🇮🇳 Marathi
-              </button>
-            </div>
-          )}
-
-          <motion.button
-            onClick={() => navigate("/appointment")}
-            whileHover={{ backgroundColor: HOVER_COLOR }}
-            className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-full shadow-lg font-semibold"
-          >
-            Book Appointment
-          </motion.button>
         </div>
+      </motion.nav>
 
-        {/* MOBILE MENU ICON */}
-        {!menuOpen && (
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="md:hidden text-2xl text-gray-700"
-          >
-            <FaBars />
-          </button>
-        )}
-      </div>
-
-      {/* BACKDROP */}
+      {/* Mobile Backdrop */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/40 z-40 md:hidden"
-            onClick={closeMenu}
+            className="fixed inset-0 z-40 md:hidden bg-black/20 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={closeAll}
           />
         )}
       </AnimatePresence>
 
-      {/* MOBILE SIDEBAR */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="md:hidden fixed top-0 right-0 h-full w-[80%] bg-white shadow-xl z-50 overflow-y-auto"
+            className="md:hidden fixed right-0 top-0 h-full w-80 max-w-[90vw] z-50 flex flex-col shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ duration: 0.28 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            style={{
+              background: "rgba(255, 255, 255, 0.98)",
+              backdropFilter: "blur(24px)",
+              borderLeft: "1px solid rgba(0,0,0,0.05)"
+            }}
           >
-            {/* CLOSE BUTTON */}
-            <div className="flex justify-end px-6 py-4">
-              <button onClick={closeMenu} className="text-3xl text-gray-600">
-                <FaTimes />
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-b from-white to-[#e6f2f2]/40">
+              <Link to="/" onClick={closeAll}>
+                <img src={logoFull} alt="Pure Bliss" className="h-10 object-contain" />
+              </Link>
+              <button
+                onClick={closeAll}
+                className="p-2 rounded-xl hover:bg-[#e6f2f2] hover:shadow-sm transition-all"
+              >
+                <X size={20} className="text-gray-700" />
               </button>
             </div>
 
-            {/* MOBILE MENU CONTENT */}
-            <div className="px-6 pb-12 flex flex-col space-y-10 text-lg">
-              {/* MAIN MENU */}
-              <div className="space-y-3">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Main Menu
-                </p>
-
-                <div className="flex flex-col space-y-3">
-                  <Link to="/" onClick={closeMenu} className="nav-underline">
-                    Home
-                  </Link>
-                  <Link to="/about" onClick={closeMenu} className="nav-underline">
-                    About
-                  </Link>
+            <div className="flex-1 p-6 space-y-2 overflow-y-auto">
+              {NAV_LINKS.map(({ label, to }, i) => (
+                <motion.div
+                  key={to}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
                   <Link
-                    to="/contact"
-                    onClick={closeMenu}
-                    className="nav-underline"
+                    to={to}
+                    onClick={closeAll}
+                    className={`block p-4 rounded-2xl text-lg font-medium transition-all duration-200 flex items-center justify-between border hover:border-[#3A5A5A]/40 hover:shadow-md ${isActive(to)
+                      ? "bg-gradient-to-r from-[#e6f2f2] to-[#d9eeee] text-[#2f4a4a] border-[#3A5A5A]/40 shadow-md font-semibold"
+                      : "text-gray-700 hover:text-gray-900 hover:bg-[#e6f2f2] border border-gray-100"
+                      }`}
                   >
-                    Contact
+                    {label}
+                    {isActive(to) && (
+                      <div className="w-2 h-2 bg-[#3A5A5A] rounded-full" />
+                    )}
                   </Link>
-                </div>
-              </div>
+                </motion.div>
+              ))}
 
-              <hr />
-
-              {/* MOBILE SERVICES */}
-              <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Our Services
-                </p>
-
+              <div>
                 <button
-                  className="flex justify-between items-center w-full"
-                  onClick={() => setMobileServicesOpen((v) => !v)}
-                >
-                  <span className="nav-underline">Services</span>
-                  <span>{mobileServicesOpen ? "▲" : "▼"}</span>
+                  onClick={() => setMobileServicesOpen(v => !v)}
+                  className="w-full flex items-center justify-between p-4 rounded-2xl text-lg font-medium text-gray-700 hover:text-gray-900 hover:bg-[#e6f2f2] border border-gray-100 hover:border-[#3A5A5A]/30 transition-all duration-200">
+                  Services
+                  <motion.span animate={{ rotate: mobileServicesOpen ? 180 : 0 }}>
+                    <ChevronDown size={20} className="text-gray-500" />
+                  </motion.span>
                 </button>
+                <AnimatePresence>
+                  {mobileServicesOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="ml-4 mt-3 space-y-2 overflow-hidden"
+                    >
+                      {SERVICES.map((s, i) => (
+                        <motion.button
+                          key={s.to}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          onClick={() => go(s.to)}
+                          className="w-full flex items-center justify-between p-3 rounded-xl text-md text-gray-700 hover:text-gray-900 hover:bg-[#e6f2f2] border border-gray-100 hover:border-[#3A5A5A]/30 transition-all shadow-sm">
 
-                {mobileServicesOpen && (
-                  <div className="pl-3 flex flex-col space-y-2">
-                    <button
-                      onClick={() => navigateService("/skincare")}
-                      className="nav-underline text-left"
-                    >
-                      Skin Care
-                    </button>
-                    <button
-                      onClick={() => navigateService("/haircare")}
-                      className="nav-underline text-left"
-                    >
-                      Hair Care
-                    </button>
-                    <button
-                      onClick={() => navigateService("/eyecare")}
-                      className="nav-underline text-left"
-                    >
-                      Eye Care
-                    </button>
-                    <button
-                      onClick={() => navigateService("/makeup")}
-                      className="nav-underline text-left"
-                    >
-                      Semi-Permanent Makeup
-                    </button>
-                  </div>
-                )}
+                          <span>{s.label}</span>
+                          <span className="text-xs bg-[#e6f2f2] text-[#3A5A5A] px-3 py-1 rounded-full font-medium">
+                            {s.tag}
+                          </span>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <hr />
-
-              {/* MOBILE LANGUAGE */}
-              <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Language Options
-                </p>
-
-                <button
-                  className="flex justify-between items-center w-full"
-                  onClick={() => setMobileLangOpen((v) => !v)}
-                >
-                  <span className="nav-underline">🌐 Translate</span>
-                  <span>{mobileLangOpen ? "▲" : "▼"}</span>
-                </button>
-
-                {mobileLangOpen && (
-                  <div className="pl-3 flex flex-col space-y-2">
-                    <button
-                      onClick={() => translateToLang("en")}
-                      className="nav-underline text-left"
-                    >
-                      🇬🇧 English
-                    </button>
-                    <button
-                      onClick={() => translateToLang("hi")}
-                      className="nav-underline text-left"
-                    >
-                      🇮🇳 Hindi
-                    </button>
-                    <button
-                      onClick={() => translateToLang("mr")}
-                      className="nav-underline text-left"
-                    >
-                      🇮🇳 Marathi
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <hr />
-
-              {/* CTA BUTTON */}
               <motion.button
-                onClick={() => {
-                  closeMenu();
-                  navigate("/appointment");
-                }}
-                whileHover={{ backgroundColor: HOVER_COLOR }}
-                className="w-full bg-[var(--color-primary)] text-white py-3 rounded-full font-semibold shadow-md"
+                onClick={() => go("/appointment")}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-[#3A5A5A] to-[#1f3f3f] hover:from-[#2f4a4a] hover:to-[#163535] text-white font-semibold uppercase tracking-wide py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 mt-8 border border-[#3A5A5A]/50"
               >
+                <Calendar size={20} />
                 Book Appointment
               </motion.button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 };
 
