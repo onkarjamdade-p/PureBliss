@@ -97,6 +97,7 @@ const PageLoader = ({ isLoading }) => {
             </div>
           </motion.div>
 
+
           {/* Brand name */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.55 }} style={{ textAlign: "center", marginBottom: 24 }}>
             <p style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(1.4rem,4vw,1.75rem)", color: "#0d3a54", letterSpacing: "0.06em", margin: "0 0 4px", lineHeight: 1.2 }}>Pure Bliss</p>
