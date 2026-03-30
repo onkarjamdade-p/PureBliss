@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import Pure_Bliss_2 from "../../assets/video/Pure_Bliss_2.mp4";
-import PureBlissLogo from "/Users/kiranjamdade/Documents/Onkar/hh/pure-bliss/src/assets/logo_1.png"; // ✅ update path if needed
+import PureBlissLogo from "../../assets/logo_1.png"; // ✅ update path if needed
 
 /* ─────────────────────────────────────────────
    Page Loader — inline (no separate file needed)
@@ -14,6 +14,7 @@ const PageLoader = ({ isLoading }) => {
     if (!isLoading) {
       const t = setTimeout(() => setVisible(false), 650);
       return () => clearTimeout(t);
+
     }
   }, [isLoading]);
 
